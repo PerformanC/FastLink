@@ -159,7 +159,7 @@ client.login('Your bot token here')
 
 ## Documentation
 
-For now, we still don't have a documentation, but you can easily use the code above as a reference, and use Lavalink docs as a reference, since we don't have high-level methods, and we use the same function names as the Lavalink API.
+We have a documentation for FastLink, you can find it [here](https://performanc.github.io/FastLinkDocs/). If you have any issue with it, please report it on GitHub Issues.
 
 ## Support
 

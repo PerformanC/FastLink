@@ -1,3 +1,8 @@
+/**
+ * @file index.js
+ * @author PerformanC <performancorg@gmail.com>
+ */
+
 import event from 'events'
 
 import wsEvents from './src/wsEvents.js'
@@ -12,6 +17,14 @@ let sessionIds = {}
 
 const Event = new event()
 
+/**
+ * Connects node's WebSocket server for communication.
+ *
+ * @param {Array} An array of node objects containing connection details.
+ * @param {Object} Configuration object containing botId, shards, queue, and debug options.
+ * @throws {Error} If nodes or config is not provided or not in the expected format.
+ * @returns {Object} Event object representing the WebSocket event handlers.
+ */
 function connectNodes(nodes, config) {
   if (!nodes) throw new Error('No nodes provided.')
   if (typeof nodes != 'object') throw new Error('Nodes must be an array.')
@@ -92,6 +105,13 @@ function getRecommendedNode() {
   return node
 }
 
+/**
+ * Creates a player for the specified guildId.
+ *
+ * @param {string} The ID of the guild for which the player is being created.
+ * @throws {Error} If guildId is not provided or not a string.
+ * @returns {string} The hostname of the recommended node for the player.
+ */
 function createPlayer(guildId) {
   if (!guildId) throw new Error('No guildId provided.')
   if (typeof guildId != 'string') throw new Error('GuildId must be a string.')
@@ -112,6 +132,13 @@ function createPlayer(guildId) {
   return node
 }
 
+/**
+ * Retrieves the hostname of the node associated with the player for the specified guildId.
+ *
+ * @param {string} The ID of the guild for which the player is being retrieved.
+ * @throws {Error} If guildId is not provided or not a string.
+ * @returns {string|null} The hostname of the node associated with the player, or null if the player does not exist.
+ */
 function getPlayer(guildId) {
   if (!guildId) throw new Error('No guildId provided.')
   if (typeof guildId != 'string') throw new Error('GuildId must be a string.')
@@ -121,12 +148,23 @@ function getPlayer(guildId) {
   return Players[guildId].node
 }
 
+/**
+ * Represents a player for an audio streaming service.
+ *
+ * @class Player
+ */
 class Player {
+  /**
+   * Constructs a Player object.
+   *
+   * @param {node} The node to connect to.
+   * @param {guildId} The ID of the guild associated with the player.
+   * @throws {Error} If the node or guildId is not provided, or if they are of invalid type or do not exist.
+   */
   constructor(node, guildId) {
     if (!node) throw new Error('No node provided.')
     if (typeof node != 'string') throw new Error('Node must be a string.')
   
-    console.log('abc', node, Nodes)
     if (!Nodes[node]) throw new Error('Node does not exist.')
   
     if (!guildId) throw new Error('No guildId provided.')
@@ -136,6 +174,13 @@ class Player {
     this.guildId = guildId
   }
 
+  /**
+   * Connects to a voice channel.
+   *
+   * @param {voiceId} The ID of the voice channel to connect to.
+   * @param {sendPayload} A function for sending payload data.
+   * @throws {Error} If the voiceId or sendPayload is not provided, or if they are of invalid type.
+   */
   connect(voiceId, sendPayload) {  
     if (!voiceId) throw new Error('No voiceId provided.')
     if (typeof voiceId != 'string') throw new Error('VoiceId must be a string.')
@@ -154,6 +199,13 @@ class Player {
     })
   }
 
+  /**
+   * Loads a track.
+   *
+   * @param {search} The search query for the track.
+   * @return {TrackData} The loaded track data.
+   * @throws {Error} If the search is not provided or is of invalid type.
+   */
   async loadTrack(search) {  
     if (!search) throw new Error('No search provided.')
     if (typeof search != 'string') throw new Error('Search must be a string.')
@@ -169,6 +221,13 @@ class Player {
     return data
   }
 
+  /**
+   * Updates the player state.
+   *
+   * @param {UpdateBody} body The body of the update request.
+   * @param {boolean} Optional flag to specify whether to replace the existing track or not.
+   * @throws {Error} If the body is not provided or is of invalid type.
+   */
   async update(body, noReplace) {  
     if (!body) throw new Error('No body provided.')
     if (typeof body != 'object') throw new Error('Body must be an object.')
@@ -214,6 +273,11 @@ class Player {
     })
   }
 
+  /**
+   * Destroys the player.
+   *
+   * @throws {None}
+   */
   destroy() {  
     Nodes[this.node].players[this.guildId] = null
   
@@ -226,6 +290,12 @@ class Player {
     })
   }
 
+  /**
+   * Updates the session data for the player.
+   *
+   * @param {SessionData} The session data to update.
+   * @throws {Error} If the data is not provided or is of invalid type.
+   */
   updateSession(data) {  
     if (!data) throw new Error('No data provided.')
     if (typeof data != 'object') throw new Error('Data must be an object.')
@@ -240,19 +310,39 @@ class Player {
     })
   }
 
+  /**
+   * Gets the queue of tracks.
+   *
+   * @return {Array<TrackData>} The queue of tracks.
+   * @throws {Error} If the queue is disabled.
+   */
   getQueue() {  
     if (!Config.queue) throw new Error('Queue is disabled. (Config.queue = false)')
   
     return Players[this.guildId].queue
   }
 
+  /**
+   * Skips the currently playing track.
+   *
+   * @return {SkipResult} The skipped track data.
+   * @throws {Error} If the queue is disabled or there are no tracks in the queue.
+   */
   skipTrack() {  
     if (!Config.queue) throw new Error('Queue is disabled. (Config.queue = false)')
   
-    if (Players[this.guildId].queue.length > 0) {
+    console.log(Players[this.guildId].queue)
+    if (Players[this.guildId].queue.length > 1) {
       Players[this.guildId].queue.shift()
   
-      this.updatePlayer({ encodedTrack: Players[this.guildId].queue[0] })
+      utils.makeRequest(`http${Nodes[this.node].secure ? 's' : ''}://${Nodes[this.node].hostname}:${Nodes[this.node].port}/v4/sessions/${Nodes[this.node].sessionId}/players/${this.guildId}`, {
+        headers: {
+          Authorization: Nodes[this.node].password
+        },
+        body: { encodedTrack: Players[this.guildId].queue[0] },
+        port: Nodes[this.node].port,
+        method: 'PATCH'
+      })
   
       return { skipped: true, queue: Players[this.guildId].queue, track: Players[this.guildId].queue[0] }
     }
@@ -260,6 +350,13 @@ class Player {
     return { skipped: false, queue: [], track: null, error: 'No tracks in queue.' }
   }
 
+  /**
+   * Decodes a track.
+   *
+   * @param {string} The array to decode.
+   * @throws {Error} If a track is not provided or if track is not a string.
+   * @return {Promise} A Promise that resolves to the decoded data.
+   */
   async decodeTrack(track) {  
     if (!track) throw new Error('No track provided.')
     if (typeof track != 'string') throw new Error('Track must be a string.')
@@ -275,6 +372,13 @@ class Player {
     return data
   }
   
+  /**
+   * Decodes an array of tracks.
+   *
+   * @param {Array} The array of tracks to decode.
+   * @throws {Error} If no tracks are provided or if tracks is not an array.
+   * @return {Promise} A Promise that resolves to the decoded data.
+   */
   async decodeTracks(tracks) {  
     if (!tracks) throw new Error('No tracks provided.')
     if (typeof tracks != 'object') throw new Error('Tracks must be an array.')
@@ -292,6 +396,13 @@ class Player {
   }
 }
 
+/**
+ * Retrieves the players for a given node.
+ *
+ * @param {string} The node to retrieve players from.
+ * @throws {Error} If no node is provided or if node is not a string.
+ * @return {Promise} A Promise that resolves to the retrieved player data.
+ */
 async function getPlayers(node) {
   if (!node) throw new Error('No node provided.')
   if (typeof node != 'string') throw new Error('Node must be a string.')
@@ -309,6 +420,13 @@ async function getPlayers(node) {
   return data
 }
 
+/**
+ * Retrieves the info for a given node.
+ *
+ * @param {string} The node to retrieve info from.
+ * @throws {Error} If no node is provided or if node is not a string.
+ * @return {Promise} A Promise that resolves to the retrieved info data.
+ */
 async function getInfo(node) {
   if (!node) throw new Error('No node provided.')
   if (typeof node != 'string') throw new Error('Node must be a string.')
@@ -326,6 +444,13 @@ async function getInfo(node) {
   return data
 }
 
+/**
+ * Retrieves the stats for a given node.
+ *
+ * @param {string} The node to retrieve stats from.
+ * @throws {Error} If no node is provided or if node is not a string.
+ * @return {Promise} A Promise that resolves to the retrieved stats data.
+ */
 async function getStats(node) {
   if (!node) throw new Error('No node provided.')
   if (typeof node != 'string') throw new Error('Node must be a string.')
@@ -343,6 +468,13 @@ async function getStats(node) {
   return data
 }
 
+/**
+ * Retrieves the version for a given node.
+ *
+ * @param {string} The node to retrieve version from.
+ * @throws {Error} If no node is provided or if node is not a string.
+ * @return {Promise} A Promise that resolves to the retrieved version data.
+ */
 async function getVersion(node) {
   if (!node) throw new Error('No node provided.')
   if (typeof node != 'string') throw new Error('Node must be a string.')
@@ -360,6 +492,12 @@ async function getVersion(node) {
   return data
 }
 
+/**
+ * Handles raw data received from an external source.
+ *
+ * @param {Object} The raw data to handle.
+ * @throws {Error} If data is not provided or if data is not an object.
+ */
 function handleRaw(data) {
   switch (data.t) {
     case 'VOICE_SERVER_UPDATE': {
