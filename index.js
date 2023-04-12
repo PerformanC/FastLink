@@ -178,12 +178,16 @@ class Player {
    * Connects to a voice channel.
    *
    * @param {voiceId} The ID of the voice channel to connect to.
+   * @param {options} Options for the connection, deaf or mute.
    * @param {sendPayload} A function for sending payload data.
    * @throws {Error} If the voiceId or sendPayload is not provided, or if they are of invalid type.
    */
-  connect(voiceId, sendPayload) {  
+  connect(voiceId, options, sendPayload) {  
     if (!voiceId) throw new Error('No voiceId provided.')
     if (typeof voiceId != 'string') throw new Error('VoiceId must be a string.')
+
+    if (!options) options = {}
+    if (typeof options != 'object') throw new Error('Options must be an object.')
   
     if (!sendPayload) throw new Error('No sendPayload provided.')
     if (typeof sendPayload != 'function') throw new Error('SendPayload must be a function.')
@@ -193,8 +197,8 @@ class Player {
       d: {
         guild_id: this.guildId,
         channel_id: voiceId,
-        self_mute: false,
-        self_deaf: false
+        self_mute: options.mute || false,
+        self_deaf: options.deaf || false
       }
     })
   }

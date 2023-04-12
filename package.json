@@ -1,6 +1,6 @@
 {
   "name": "fastlink",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Light-weight Lavalink wrapper using Node.js.",
   "main": "index.js",
   "type": "module",
@@ -22,9 +22,5 @@
   },
   "bugs": {
     "url": "https://github.com/PerformanC/FastLink/issues"
-  },
-  "devDependencies": {
-    "eslint": "^8.38.0",
-    "eslint-config-google": "^0.14.0"
   }
 }
