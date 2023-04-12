@@ -157,8 +157,8 @@ class Player {
   /**
    * Constructs a Player object.
    *
-   * @param {node} The node to connect to.
-   * @param {guildId} The ID of the guild associated with the player.
+   * @param {string} The node to connect to.
+   * @param {string} The ID of the guild associated with the player.
    * @throws {Error} If the node or guildId is not provided, or if they are of invalid type or do not exist.
    */
   constructor(node, guildId) {
@@ -177,9 +177,9 @@ class Player {
   /**
    * Connects to a voice channel.
    *
-   * @param {voiceId} The ID of the voice channel to connect to.
-   * @param {options} Options for the connection, deaf or mute.
-   * @param {sendPayload} A function for sending payload data.
+   * @param {string} The ID of the voice channel to connect to.
+   * @param {Object} Options for the connection, deaf or mute.
+   * @param {Function} A function for sending payload data.
    * @throws {Error} If the voiceId or sendPayload is not provided, or if they are of invalid type.
    */
   connect(voiceId, options, sendPayload) {  
@@ -206,7 +206,7 @@ class Player {
   /**
    * Loads a track.
    *
-   * @param {search} The search query for the track.
+   * @param {string} The search query for the track.
    * @return {TrackData} The loaded track data.
    * @throws {Error} If the search is not provided or is of invalid type.
    */
@@ -228,7 +228,7 @@ class Player {
   /**
    * Updates the player state.
    *
-   * @param {UpdateBody} body The body of the update request.
+   * @param {Object} body The body of the update request.
    * @param {boolean} Optional flag to specify whether to replace the existing track or not.
    * @throws {Error} If the body is not provided or is of invalid type.
    */
@@ -297,7 +297,7 @@ class Player {
   /**
    * Updates the session data for the player.
    *
-   * @param {SessionData} The session data to update.
+   * @param {Object} The session data to update.
    * @throws {Error} If the data is not provided or is of invalid type.
    */
   updateSession(data) {  
