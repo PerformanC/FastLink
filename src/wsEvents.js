@@ -30,6 +30,23 @@ function close(Event, ws, node, config, Nodes, Players) {
         'Client-Name': 'PerformanC-FastLink'
       }
     })
+
+    ws.on('open', () => Nodes = open(node.hostname, config, Nodes))
+
+    ws.on('message', (data) => {
+      let temp = message(Event, data, node.hostname, config, Nodes, Players)
+      Nodes = temp.Nodes
+      Players = temp.Players
+    })
+
+    ws.on('close', () => {
+      let temp = close(Event, ws, node, config, Nodes, Players)
+      Nodes = temp.Nodes
+      Players = temp.Players
+      ws = temp.ws
+    })
+
+    ws.on('error', (err) => Nodes = error(err, node.hostname, config, Nodes))
   }, 5000)
 
   return { Nodes, Players, ws }
