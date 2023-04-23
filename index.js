@@ -13,7 +13,7 @@ import WebSocket from 'ws'
 let Config = {}
 let Nodes = {}
 let Players = {}
-let sessionIds = {}
+let voiceInfo = {}
 
 const Event = new event()
 
@@ -47,10 +47,11 @@ function connectNodes(nodes, config) {
   Config = {
     botId: config.botId,
     shards: config.shards,
-    queue: config.queue || false
+    queue: config.queue || false,
+    debug: config.debug || false
   }
 
-  utils.forEach(config, nodes, (node) => {
+  nodes.forEach((node) => {
     if (!node.hostname) throw new Error('No hostname provided.')
     if (typeof node.hostname != 'string') throw new Error('Hostname must be a string.')
 
@@ -76,22 +77,22 @@ function connectNodes(nodes, config) {
       }
     })
 
-    ws.on('open', () => Nodes = wsEvents.open(node.hostname, config, Nodes))
+    ws.on('open', () => Nodes = wsEvents.open(node.hostname, Config, Nodes))
 
     ws.on('message', (data) => {
-      let temp = wsEvents.message(Event, data, node.hostname, config, Nodes, Players)
+      let temp = wsEvents.message(Event, data, node.hostname, Config, Nodes, Players)
       Nodes = temp.Nodes
       Players = temp.Players
     })
 
     ws.on('close', () => {
-      let temp = wsEvents.close(Event, ws, node, config, Nodes, Players)
+      let temp = wsEvents.close(Event, ws, node, Config, Nodes, Players)
       Nodes = temp.Nodes
       Players = temp.Players
       ws = temp.ws
     })
 
-    ws.on('error', (err) => Nodes = wsEvents.error(err, node.hostname, config, Nodes))
+    ws.on('error', (err) => Nodes = wsEvents.error(err, node.hostname, Config, Nodes))
   })
 
   return Event
@@ -121,6 +122,7 @@ function createPlayer(guildId) {
   const node = getRecommendedNode().hostname
 
   Players[guildId] = {
+    connected: false,
     playing: false,
     volume: null,
     node,
@@ -188,9 +190,11 @@ class Player {
 
     if (!options) options = {}
     if (typeof options != 'object') throw new Error('Options must be an object.')
-  
+
     if (!sendPayload) throw new Error('No sendPayload provided.')
     if (typeof sendPayload != 'function') throw new Error('SendPayload must be a function.')
+
+    Players[this.guildId].connected = true
   
     sendPayload(this.guildId, {
       op: 4,
@@ -214,7 +218,22 @@ class Player {
     if (!search) throw new Error('No search provided.')
     if (typeof search != 'string') throw new Error('Search must be a string.')
   
-    const data = await utils.makeRequest(`http${Nodes[this.node].secure ? 's' : ''}://${Nodes[this.node].hostname}:${Nodes[this.node].port}/v4/loadtracks?identifier=${encodeURI(search)}`, {
+    const data = await utils.makeRequest(`http${Nodes[this.node].secure ? 's' : ''}://${Nodes[this.node].hostname}:${Nodes[this.node].port}/v4/loadtracks?identifier=${encodeURIComponent(search)}`, {
+      headers: {
+        Authorization: Nodes[this.node].password
+      },
+      port: Nodes[this.node].port,
+      method: 'GET'
+    })
+  
+    return data
+  }
+
+  async loadCaptions(track) {  
+    if (!track) throw new Error('No track provided.')
+    if (typeof track != 'string') throw new Error('Track must be a string.')
+  
+    const data = await utils.makeRequest(`http${Nodes[this.node].secure ? 's' : ''}://${Nodes[this.node].hostname}:${Nodes[this.node].port}/v4/loadcaptions?encodedTrack=${track}`, {
       headers: {
         Authorization: Nodes[this.node].password
       },
@@ -237,13 +256,13 @@ class Player {
     if (typeof body != 'object') throw new Error('Body must be an object.')
   
     if (body.encodedTrack && Config.queue) {
-      if (Players[this.guildId].queue.length == 0)
-        Players[this.guildId].queue = [ body.encodedTrack ]
-      else {
+      if (Players[this.guildId].queue.length > 0) {
         Players[this.guildId].queue.push(body.encodedTrack)
-  
+
         return;
       }
+
+      Players[this.guildId].queue.push(body.encodedTrack)
     } else if (body.encodedTrack !== undefined) {
       Players[this.guildId].queue = []
     }
@@ -262,12 +281,12 @@ class Player {
           port: Nodes[this.node].port,
           method: 'PATCH'
         })
-      } else utils.forEach(Config, body.encodedTracks, (track) => Players[this.guildId].queue.push(track))
+      } else body.encodedTracks.forEach((track) => Players[this.guildId].queue.push(track))
   
       return;
     }
   
-    utils.makeRequest(`http${Nodes[this.node].secure ? 's' : ''}://${Nodes[this.node].hostname}:${Nodes[this.node].port}/v4/sessions/${Nodes[this.node].sessionId}/players/${this.guildId}?noReplace=${noReplace !== true ? false : true}`, {
+    const data = await utils.makeRequest(`http${Nodes[this.node].secure ? 's' : ''}://${Nodes[this.node].hostname}:${Nodes[this.node].port}/v4/sessions/${Nodes[this.node].sessionId}/players/${this.guildId}?noReplace=${noReplace !== true ? false : true}`, {
       headers: {
         Authorization: Nodes[this.node].password
       },
@@ -275,6 +294,8 @@ class Player {
       port: Nodes[this.node].port,
       method: 'PATCH'
     })
+
+    return data
   }
 
   /**
@@ -505,7 +526,7 @@ async function getVersion(node) {
 function handleRaw(data) {
   switch (data.t) {
     case 'VOICE_SERVER_UPDATE': {
-      if (!sessionIds[data.d.guild_id]) return;
+      if (!voiceInfo[data.d.guild_id]) return;
 
       const player = new Player(Players[data.d.guild_id].node, data.d.guild_id)
 
@@ -513,18 +534,29 @@ function handleRaw(data) {
         voice: {
           token: data.d.token,
           endpoint: data.d.endpoint,
-          sessionId: sessionIds[data.d.guild_id]
+          sessionId: voiceInfo[data.d.guild_id].sessionId
         }
       })
 
-      delete sessionIds[data.d.guild_id]
+      voiceInfo[data.d.guild_id] = { token: data.d.token, endpoint: data.d.endpoint }
 
       break
     }
 
     case 'VOICE_STATE_UPDATE': {
+      // if (voiceInfo[data.d.guild_id] && voiceInfo[data.d.guild_id].endpoint) {
+      //   const player = new Player(Players[data.d.guild_id].node, data.d.guild_id)
+
+      //   player.update({
+      //     voice: {
+      //       token: voiceInfo[data.d.guild_id].token,
+      //       endpoint: voiceInfo[data.d.guild_id].endpoint,
+      //       sessionId: data.d.session_id
+      //     }
+      //   })
+      // }
       if (data.d.member.user.id == Config.botId)
-        sessionIds[data.d.guild_id] = data.d.session_id
+        voiceInfo[data.d.guild_id] = { sessionId: data.d.session_id }
 
       break
     }

@@ -26,7 +26,6 @@ function trackException(Event, payload, node, config, Nodes, Players) {
       })
 
       player.playing = true
-      player.track = Players[payload.guildId].queue[0]
       player.volume = 100
     }
   } else player.track = null

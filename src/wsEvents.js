@@ -53,6 +53,7 @@ function close(Event, ws, node, config, Nodes, Players) {
 }
 
 function error(err, node, config, Nodes) {
+  console.log(err)
   if (config.debug) console.log(`[FastLink] Error from ${node}: ${err}`)
 
   return Nodes

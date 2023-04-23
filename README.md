@@ -37,8 +37,7 @@ const events = Lavalink.node.connectNodes([{
   botId: 'Your bot Id here',
   shards: 1,
   queue: true,
-  debug: true,
-  opt: 'quality'
+  debug: true
 })
 
 client.on('messageCreate', async (message) => {
@@ -164,3 +163,9 @@ We have a documentation for FastLink, you can find it [here](https://performanc.
 ## Support
 
 In case of any issue using it (except bugs, that should be reported on GitHub Issues), you are free to ask on PerformanC's [Discord server](https://discord.gg/uPveNfTuCJ).
+
+## License
+
+FastLink is licensed under PerformanC's custom license, which is a modified version of the MIT license. You can find it [here](README.md)
+
+The license is made to protect PerformanC's work, and to prevent people from stealing our code. You are free to use FastLink in your projects, but you are not allowed to get any part of the code without our permission. You are also not allowed to remove the license from the project.
