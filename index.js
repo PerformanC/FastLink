@@ -5,15 +5,15 @@
 
 import event from 'events'
 
-import wsEvents from './src/wsEvents.js'
+import events from './src/events.js'
 import utils from './src/utils.js'
 
 import WebSocket from 'ws'
 
-let Config = {}
-let Nodes = {}
-let Players = {}
-let voiceInfo = {}
+let Config = {},
+    Nodes = {}
+    Players = {}
+    voiceInfo = {}
 
 const Event = new event()
 
@@ -77,25 +77,38 @@ function connectNodes(nodes, config) {
       }
     })
 
-    ws.on('open', () => Nodes = wsEvents.open(node.hostname, Config, Nodes))
+    ws.on('open', () => Nodes = events.open(node.hostname, Config, Nodes))
 
     ws.on('message', (data) => {
-      let temp = wsEvents.message(Event, data, node.hostname, Config, Nodes, Players)
+      const temp = events.message(Event, data, node.hostname, Config, Nodes, Players)
+
       Nodes = temp.Nodes
       Players = temp.Players
     })
 
     ws.on('close', () => {
-      let temp = wsEvents.close(Event, ws, node, Config, Nodes, Players)
+      const temp = events.close(Event, ws, node, Config, Nodes, Players)
+
       Nodes = temp.Nodes
       Players = temp.Players
       ws = temp.ws
     })
 
-    ws.on('error', (err) => Nodes = wsEvents.error(err, node.hostname, Config, Nodes))
+    ws.on('error', (err) => Nodes = events.error(err, node.hostname, Config, Nodes))
   })
 
   return Event
+}
+
+/**
+ * Checks if any node is connected.
+ *
+ * @returns {boolean} The boolean if any node is connected or not.
+ */
+function anyNodeAvailable() {
+  let nodes = Object.values(Nodes).filter((node) => node.connected)
+
+  return !nodes ? false : true
 }
 
 function getRecommendedNode() {
@@ -229,21 +242,6 @@ class Player {
     return data
   }
 
-  async loadCaptions(track) {  
-    if (!track) throw new Error('No track provided.')
-    if (typeof track != 'string') throw new Error('Track must be a string.')
-  
-    const data = await utils.makeRequest(`http${Nodes[this.node].secure ? 's' : ''}://${Nodes[this.node].hostname}:${Nodes[this.node].port}/v4/loadcaptions?encodedTrack=${track}`, {
-      headers: {
-        Authorization: Nodes[this.node].password
-      },
-      port: Nodes[this.node].port,
-      method: 'GET'
-    })
-  
-    return data
-  }
-
   /**
    * Updates the player state.
    *
@@ -263,9 +261,7 @@ class Player {
       }
 
       Players[this.guildId].queue.push(body.encodedTrack)
-    } else if (body.encodedTrack !== undefined) {
-      Players[this.guildId].queue = []
-    }
+    } else if (body.encodedTrack !== undefined) Players[this.guildId].queue = []
   
     if (body.encodedTracks) {
       if (!Config.queue) throw new Error('Queue is disabled. (Config.queue = false)')
@@ -355,8 +351,7 @@ class Player {
    */
   skipTrack() {  
     if (!Config.queue) throw new Error('Queue is disabled. (Config.queue = false)')
-  
-    console.log(Players[this.guildId].queue)
+
     if (Players[this.guildId].queue.length > 1) {
       Players[this.guildId].queue.shift()
   
@@ -544,17 +539,6 @@ function handleRaw(data) {
     }
 
     case 'VOICE_STATE_UPDATE': {
-      // if (voiceInfo[data.d.guild_id] && voiceInfo[data.d.guild_id].endpoint) {
-      //   const player = new Player(Players[data.d.guild_id].node, data.d.guild_id)
-
-      //   player.update({
-      //     voice: {
-      //       token: voiceInfo[data.d.guild_id].token,
-      //       endpoint: voiceInfo[data.d.guild_id].endpoint,
-      //       sessionId: data.d.session_id
-      //     }
-      //   })
-      // }
       if (data.d.member.user.id == Config.botId)
         voiceInfo[data.d.guild_id] = { sessionId: data.d.session_id }
 
@@ -565,7 +549,8 @@ function handleRaw(data) {
 
 export default {
   node: {
-    connectNodes
+    connectNodes,
+    anyNodeAvailable
   },
   player: {
     createPlayer,

@@ -1,17 +1,17 @@
 # Fastlink
 
-[![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/5944/badge)](https://bestpractices.coreinfrastructure.org/projects/5944) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/70e85894a5574ed4a227fa0072f07fe1)](https://www.codacy.com/gh/ThePedroo/FastLink/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ThePedroo/FastLink&amp;utm_campaign=Badge_Grade) [![Discord Server](https://img.shields.io/discord/948014684630560768?color=5865F2&logo=discord&logoColor=white)](https://discord.gg/ut6qxsgtME) [![FastLink package size](https://packagephobia.now.sh/badge?p=fastlink)](https://packagephobia.now.sh/result?p=fastlink)
+[![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/5944/badge)](https://bestpractices.coreinfrastructure.org/projects/5944) [![Discord Server](https://img.shields.io/discord/1036045973039890522?color=5865F2&logo=discord&logoColor=white)](https://discord.gg/uPveNfTuCJ) [![FastLink package size](https://packagephobia.now.sh/badge?p=fastlink)](https://packagephobia.now.sh/result?p=fastlink)
 
 ## About
 
-Fastlink is a NodeJs Lavalink client, with a low-level representation of the Lavalink API, with a simple and easy-to-use API.
+FastLink is a NodeJs Lavalink client, with a low-level representation of the Lavalink API, with a simple and easy-to-use API.
 
 Able to be installed in most NodeJs versions, and with low memory usage, FastLink is a good choice for your Discord bot.
 
 ## Recommendations
 
-- NodeJs 16.6.0 or higher
-- [NodeLink](https://github.com/PerformanC/NodeLink) for performance, Lavalink for filters and stability.
+- NodeJs 16.6.0 or higher (ES6)
+- [NodeLink](https://github.com/PerformanC/NodeLink) for performance, Lavalink for stability.
 
 ## Installation
 
@@ -85,12 +85,6 @@ client.on('messageCreate', async (message) => {
       player.update({ encodedTrack: track.data[0].encoded })
 
       return message.channel.send(`Playing ${track.data[0].info.title} from ${track.data[0].info.sourceName} from search.`)
-    }
-
-    if (track.loadType == 'short') {
-      player.update({ encodedTrack: track.data.encoded, })
-
-      return message.channel.send(`Playing ${track.data.info.title} from ${track.data.info.sourceName} from shorts.`)
     }
   }
   // volume
@@ -168,4 +162,4 @@ In case of any issue using it (except bugs, that should be reported on GitHub Is
 
 FastLink is licensed under PerformanC's custom license, which is a modified version of the MIT license. You can find it [here](README.md)
 
-The license is made to protect PerformanC's work, and to prevent people from stealing our code. You are free to use FastLink in your projects, but you are not allowed to get any part of the code without our permission. You are also not allowed to remove the license from the project.
+The license is made to protect PerformanC's software(s) and to prevent people from stealing our code. You are free to use FastLink in your projects, but you are not allowed to get any part of the code without our permission. You are also not allowed to remove the license from the project.
