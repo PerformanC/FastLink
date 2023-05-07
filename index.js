@@ -10,10 +10,10 @@ import utils from './src/utils.js'
 
 import WebSocket from 'ws'
 
-let Config = {},
-    Nodes = {}
-    Players = {}
-    voiceInfo = {}
+let Config = {}
+let Nodes = {}
+let Players = {}
+let voiceInfo = {}
 
 const Event = new event()
 
