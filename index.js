@@ -35,10 +35,10 @@ function connectNodes(nodes, config) {
   if (config.debug == undefined) throw new Error('No debug provided.')
   if (typeof config.debug != 'boolean') throw new Error('Debug must be a boolean.')
 
-  if (config.botId == undefined) throw new Error('No botId provided.')
+  if (!config.botId) throw new Error('No botId provided.')
   if (typeof config.botId != 'string') throw new Error('BotId must be a string.')
 
-  if (config.shards == undefined) throw new Error('No shards provided.')
+  if (!config.shards) throw new Error('No shards provided.')
   if (typeof config.shards != 'number') throw new Error('Shards must be a number.')
 
   if (config.queue)
