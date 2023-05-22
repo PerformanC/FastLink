@@ -32,7 +32,7 @@ function connectNodes(nodes, config) {
   if (!config) throw new Error('No config provided.')
   if (typeof config != 'object') throw new Error('Config must be an object.')
 
-  if (!config.debug) throw new Error('No debug provided.')
+  if (config.debug == undefined) throw new Error('No debug provided.')
   if (typeof config.debug != 'boolean') throw new Error('Debug must be a boolean.')
 
   if (!config.botId) throw new Error('No botId provided.')
