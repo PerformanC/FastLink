@@ -137,6 +137,7 @@ function createPlayer(guildId) {
   Players[guildId] = {
     connected: false,
     playing: false,
+    paused: false,
     volume: null,
     node,
   }
@@ -281,6 +282,14 @@ class Player {
   
       return;
     }
+
+    if (body.paused !== undefined) {
+      if (body.paused) {
+        Players[this.guildId].playing = false
+        Players[this.guildId].paused = true
+      }
+      else Players[this.guildId].paused = false
+    }
   
     const data = await utils.makeRequest(`http${Nodes[this.node].secure ? 's' : ''}://${Nodes[this.node].hostname}:${Nodes[this.node].port}/v4/sessions/${Nodes[this.node].sessionId}/players/${this.guildId}?noReplace=${noReplace !== true ? false : true}`, {
       headers: {
@@ -414,6 +423,21 @@ class Player {
   
     return data
   }
+
+  async loadCaptions(track) {  
+    if (!track) throw new Error('No track provided.')
+    if (typeof track != 'string') throw new Error('Track must be a string.')
+  
+    const data = await utils.makeRequest(`http${Nodes[this.node].secure ? 's' : ''}://${Nodes[this.node].hostname}:${Nodes[this.node].port}/v4/loadcaptions?encodedTrack=${track}`, {
+      headers: {
+        Authorization: Nodes[this.node].password
+      },
+      port: Nodes[this.node].port,
+      method: 'GET'
+    })
+  
+    return data
+  }
 }
 
 /**
@@ -513,6 +537,83 @@ async function getVersion(node) {
 }
 
 /**
+ * Retrieves the router planner status for a given node.
+ * 
+ * @param {string} The node to retrieve router planner status from.
+ * @throws {Error} If no node is provided or if node is not a string.
+ * @return {Promise} A Promise that resolves to the retrieved router planner status data.
+ */
+async function getRouterPlannerStatus(node) {
+  if (!node) throw new Error('No node provided.')
+  if (typeof node != 'string') throw new Error('Node must be a string.')
+
+  if (!Nodes[node]) throw new Error('Node does not exist.')
+
+  const data = await utils.makeRequest(`http${Nodes[node].secure ? 's' : ''}://${Nodes[node].hostname}:${Nodes[node].port}/v4/routerplanner/status`, {
+    headers: {
+      Authorization: Nodes[node].password
+    },
+    port: Nodes[node].port,
+    method: 'GET'
+  })
+
+  return data
+}
+
+/**
+ * Unmarks a failed address for a given node.
+ * 
+ * @param {string} The node to unmark failed address from.
+ * @param {string} The address to unmark.
+ * @throws {Error} If no node is provided or if node is not a string.
+ * @returns {Promise} A Promise that resolves when the request is complete.
+ */
+async function unmarkFailedAddress(node, address) {
+  if (!node) throw new Error('No node provided.')
+  if (typeof node != 'string') throw new Error('Node must be a string.')
+
+  if (!Nodes[node]) throw new Error('Node does not exist.')
+
+  if (!address) throw new Error('No address provided.')
+  if (typeof address != 'string') throw new Error('Address must be a string.')
+
+  const data = await utils.makeRequest(`http${Nodes[node].secure ? 's' : ''}://${Nodes[node].hostname}:${Nodes[node].port}/v4/routeplanner/free/address`, {
+    headers: {
+      Authorization: Nodes[node].password
+    },
+    body: { address },
+    port: Nodes[node].port,
+    method: 'GET'
+  })
+
+  return data
+}
+
+/**
+ * Unmarks all failed addresses for a given node.
+ * 
+ * @param {string} The node to unmark failed addresses from.
+ * @throws {Error} If no node is provided or if node is not a string.
+ * @returns {Promise} A Promise that resolves when the request is complete.
+ */
+async function unmarkAllFailedAddresses(node) {
+  if (!node) throw new Error('No node provided.')
+  if (typeof node != 'string') throw new Error('Node must be a string.')
+
+  if (!Nodes[node]) throw new Error('Node does not exist.')
+
+  const data = await utils.makeRequest(`http${Nodes[node].secure ? 's' : ''}://${Nodes[node].hostname}:${Nodes[node].port}/v4/routeplanner/free/all`, {
+    headers: {
+      Authorization: Nodes[node].password
+    },
+    port: Nodes[node].port,
+    method: 'GET'
+  })
+
+  return data
+}
+
+/**
  * Handles raw data received from an external source.
  *
  * @param {Object} The raw data to handle.
@@ -557,6 +658,11 @@ export default {
     getPlayer,
     Player,
     getPlayers
+  },
+  routerPlanner: {
+    getRouterPlannerStatus,
+    unmarkFailedAddress,
+    unmarkAllFailedAddresses
   },
   other: {
     getInfo,

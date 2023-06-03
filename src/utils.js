@@ -16,7 +16,8 @@ function makeRequest(url, options) {
         'User-Agent': 'FastLink',
         'Content-Type': 'application/json',
         ...(options.headers || {})
-      }
+      },
+      port: options.port || (url.startsWith('https://') ? 443 : 80),
     }, (res) => {
       if (options.retrieveHeaders) {
         req.destroy()
@@ -46,7 +47,13 @@ function makeRequest(url, options) {
 
       res.on('data', (chunk) => (data += chunk))
 
-      res.on('end', () => resolve(JSON.parse(data.toString())))
+      res.on('end', () => {
+        try {
+          resolve(JSON.parse(data))
+        } catch {
+          resolve(data)
+        }
+      })
     })
 
     req.on('error', (error) => {
