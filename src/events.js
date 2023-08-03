@@ -7,7 +7,7 @@ import trackException from './events/event/trackException.js'
 import trackStuck from './events/event/trackStuck.js'
 import websocketClosed from './events/event/websocketClosed.js'
 
-import WebSocket from 'ws'
+import index from '../index.js'
 
 function handle(Event, payload, node, config, Nodes, Players) {
   let temp = { Nodes, Players }
@@ -86,36 +86,15 @@ function message(Event, data, node, config, Nodes, Players) {
 function close(Event, ws, node, config, Nodes, Players) {
   if (config.debug) console.log(`[FastLink] Disconnected from ${node.hostname}`)
 
-  Nodes[node.hostname].connected = false
+  Nodes[node.hostname] = null
+  
+  Object.keys(Players).forEach((key) => {
+    if (Players[key].node == node.hostname)
+      delete Players[key]
+  })
 
   setTimeout(() => {
-    ws = new WebSocket(`ws${node.secure ? 's' : ''}://${node.hostname}:${node.port}/v4/websocket`, {
-      headers: {
-        Authorization: node.password,
-        'Num-Shards': config.shards,
-        'User-Id': config.botId,
-        'Client-Name': 'FastLink'
-      }
-    })
-
-    ws.on('open', () => Nodes = open(node.hostname, config, Nodes))
-
-    ws.on('message', (data) => {
-      const temp = message(Event, data, node.hostname, config, Nodes, Players)
-
-      Nodes = temp.Nodes
-      Players = temp.Players
-    })
-
-    ws.on('close', () => {
-      const temp = close(Event, ws, node, config, Nodes, Players)
-
-      Nodes = temp.Nodes
-      Players = temp.Players
-      ws = temp.ws
-    })
-
-    ws.on('error', (err) => Nodes = error(err, node.hostname, config, Nodes))
+    index.node.connectNodes([ node ], config)
   }, 5000)
 
   return { Nodes, Players, ws }

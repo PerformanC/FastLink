@@ -640,8 +640,22 @@ function handleRaw(data) {
     }
 
     case 'VOICE_STATE_UPDATE': {
-      if (data.d.member.user.id == Config.botId)
-        voiceInfo[data.d.guild_id] = { sessionId: data.d.session_id }
+      if (data.d.member.user.id == Config.botId) {
+        if (!voiceInfo[data.d.guild_id]) voiceInfo[data.d.guild_id] = { sessionId: data.d.session_id }
+        else voiceInfo[data.d.guild_id].sessionId = data.d.session_id
+
+        if (voiceInfo[data.d.guild_id].token) {
+          const player = new Player(Players[data.d.guild_id].node, data.d.guild_id)
+  
+          player.update({
+            voice: {
+              token: voiceInfo[data.d.guild_id].token,
+              endpoint: voiceInfo[data.d.guild_id].endpoint,
+              sessionId: data.d.session_id
+            }
+          })
+        }
+      }
 
       break
     }
