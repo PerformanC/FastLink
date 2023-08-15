@@ -1,6 +1,6 @@
 # Fastlink
 
-[![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/5944/badge)](https://bestpractices.coreinfrastructure.org/projects/5944) [![Discord Server](https://img.shields.io/discord/1036045973039890522?color=5865F2&logo=discord&logoColor=white)](https://discord.gg/uPveNfTuCJ) [![FastLink package size](https://packagephobia.now.sh/badge?p=fastlink)](https://packagephobia.now.sh/result?p=fastlink)
+[![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/5944/badge)](https://bestpractices.coreinfrastructure.org/projects/5944) [![Discord Server](https://img.shields.io/discord/1036045973039890522?color=5865F2&logo=discord&logoColor=white)](https://discord.gg/uPveNfTuCJ) [![FastLink package size](https://packagephobia.now.sh/badge?p=@performanc/fastlink)](https://packagephobia.now.sh/result?p=@performanc/fastlink)
 
 ## About
 
@@ -11,14 +11,14 @@ Able to be installed in most NodeJs versions, and with low memory usage, FastLin
 ## Recommendations
 
 - NodeJs 16.6.0 or higher (ES6)
-- [NodeLink](https://github.com/PerformanC/NodeLink) for performance, Lavalink for stability.
+- [NodeLink](https://github.com/PerformanC/NodeLink)
 
 ## Installation
 
 You can install FastLink through npm:
 
 ```bash
-$ npm i PerformanC/FastLink
+$ npm i @performanc/fastlink
 ```
 
 And that's it, you'll be able to use FastLink in your project.
@@ -26,7 +26,7 @@ And that's it, you'll be able to use FastLink in your project.
 ## Example
 
 ```js
-import FastLink from 'fastlink'
+import Lavalink from 'fastlink'
 
 const events = Lavalink.node.connectNodes([{
   hostname: '127.0.0.1',
@@ -57,7 +57,7 @@ client.on('messageCreate', async (message) => {
 
     const player = new Lavalink.player.Player(node, message.guild.id)
 
-    player.connect(message.member.voice.channel.id.toString(), (guildId, payload) => {
+    player.connect(message.member.voice.channel.id.toString(), { mute: false, deaf: true }, (guildId, payload) => {
       client.guilds.cache.get(guildId).shard.send(payload)
     })
 

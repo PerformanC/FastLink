@@ -10,7 +10,7 @@ function trackEnd(Event, payload, node, config, Nodes, Players) {
   player.playing = false
   player.volume = null
 
-  if (config.queue) {
+  if (config.queue && payload.reason != 'replaced') {
     player.queue.shift()
 
     if (player.queue.length > 0) {

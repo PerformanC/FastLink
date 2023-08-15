@@ -244,6 +244,29 @@ class Player {
   }
 
   /**
+   * Retrieves the captions for a given track. NodeLink exclusive.
+   * 
+   * @param {string} The track to retrieve captions for.
+   * @throws {Error} If the track is not provided or is of invalid type.
+   * @return {Promise} A Promise that resolves to the retrieved captions data.
+   */
+  async getCaptions(track) {
+    if (!track) throw new Error('No track provided.')
+    if (typeof track != 'string') throw new Error('Track must be a string.')
+
+    console.log(track)
+    const data = await utils.makeRequest(`http${Nodes[this.node].secure ? 's' : ''}://${Nodes[this.node].hostname}:${Nodes[this.node].port}/v4/loadcaptions?encodedTrack=${encodeURIComponent(track)}`, {
+      headers: {
+        Authorization: Nodes[this.node].password
+      },
+      port: Nodes[this.node].port,
+      method: 'GET'
+    })
+
+    return data
+  }
+
+  /**
    * Updates the player state.
    *
    * @param {Object} body The body of the update request.

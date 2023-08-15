@@ -1,26 +1,25 @@
 {
-  "name": "fastlink",
-  "version": "2.1.1",
-  "description": "Light-weight Lavalink wrapper using Node.js.",
+  "name": "@performanc/fastlink",
+  "version": "2.1.2",
+  "description": "Low-level Lavalink/NodeLink wrapper.",
   "main": "index.js",
-  "type": "module",
-  "author": "Pedro.js#9446",
-  "license": "Apache-2.0",
-  "keywords": [
-    "Lavalink",
-    "Wrapper",
-    "Discord.js",
-    "Eris",
-    "Voice"
-  ],
-  "dependencies": {
-    "ws": "latest"
-  },
   "repository": {
     "type": "git",
-    "url": "https://github.com/PerformanC/FastLink.git"
+    "url": "git+https://github.com/PerformanC/FastLink.git"
   },
+  "keywords": [
+    "lavalink",
+    "nodelink",
+    "wrapper",
+    "voice",
+    "music",
+    "discord"
+  ],
+  "author": "The PerformanC Organization",
+  "license": "SEE LICENSE IN LICENSE",
   "bugs": {
     "url": "https://github.com/PerformanC/FastLink/issues"
-  }
+  },
+  "homepage": "https://github.com/PerformanC/FastLink#readme",
+  "type": "module"
 }
