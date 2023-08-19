@@ -7,8 +7,7 @@ import event from 'events'
 
 import events from './src/events.js'
 import utils from './src/utils.js'
-
-import WebSocket from 'ws'
+import Pws from './src/ws.js'
 
 let Config = {}
 let Nodes = {}
@@ -68,7 +67,7 @@ function connectNodes(nodes, config) {
       sessionId: null
     }
 
-    let ws = new WebSocket(`ws${node.secure ? 's' : ''}://${node.hostname}:${node.port}/v4/websocket`, {
+    let ws = new Pws(`ws${node.secure ? 's' : ''}://${node.hostname}:${node.port}/v4/websocket`, {
       headers: {
         Authorization: node.password,
         'Num-Shards': config.shards,

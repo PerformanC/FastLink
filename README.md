@@ -8,10 +8,10 @@ FastLink is a NodeJs Lavalink client, with a low-level representation of the Lav
 
 Able to be installed in most NodeJs versions, and with low memory usage, FastLink is a good choice for your Discord bot.
 
-## Recommendations
+## Minimum requirements
 
-- NodeJs 16.6.0 or higher (ES6)
-- [NodeLink](https://github.com/PerformanC/NodeLink)
+- NodeJs 13 or higher (ES6 requirements)
+- Lavalink v4.0.0 or higher
 
 ## Installation
 

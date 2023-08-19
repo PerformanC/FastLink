@@ -1,8 +1,9 @@
 {
   "name": "@performanc/fastlink",
-  "version": "2.1.2",
+  "version": "2.2.2",
   "description": "Low-level Lavalink/NodeLink wrapper.",
   "main": "index.js",
+  "type": "module",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/PerformanC/FastLink.git"
@@ -20,6 +21,5 @@
   "bugs": {
     "url": "https://github.com/PerformanC/FastLink/issues"
   },
-  "homepage": "https://github.com/PerformanC/FastLink#readme",
-  "type": "module"
+  "homepage": "https://github.com/PerformanC/FastLink#readme"
 }
