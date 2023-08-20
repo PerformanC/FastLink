@@ -86,8 +86,10 @@ function message(Event, data, node, config, Nodes, Players) {
 function close(Event, ws, node, config, Nodes, Players) {
   if (config.debug) console.log(`[FastLink] Disconnected from ${node.hostname}`)
 
+  ws.removeAllListeners()
+
   Nodes[node.hostname] = null
-  
+
   Object.keys(Players).forEach((key) => {
     if (Players[key].node == node.hostname)
       delete Players[key]

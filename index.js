@@ -446,11 +446,21 @@ class Player {
     return data
   }
 
-  async loadCaptions(track) {  
+  /**
+   * Loads captions for a given track.
+   * 
+   * @param {string} The track to load captions for.
+   * @param {string?} The language to load captions for.
+   * @throws {Error} If the track is not provided or is of invalid type.
+   * @return {Promise} A Promise that resolves to the loaded captions data.
+   */
+  async loadCaptions(track, lang) {  
     if (!track) throw new Error('No track provided.')
     if (typeof track != 'string') throw new Error('Track must be a string.')
+
+    if (lang && typeof lang != 'string') throw new Error('Lang must be a string.')
   
-    const data = await utils.makeRequest(`http${Nodes[this.node].secure ? 's' : ''}://${Nodes[this.node].hostname}:${Nodes[this.node].port}/v4/loadcaptions?encodedTrack=${track}`, {
+    const data = await utils.makeRequest(`http${Nodes[this.node].secure ? 's' : ''}://${Nodes[this.node].hostname}:${Nodes[this.node].port}/v4/loadcaptions?encodedTrack=${track}${lang ? `&language=${lang}`: ''}`, {
       headers: {
         Authorization: Nodes[this.node].password
       },
