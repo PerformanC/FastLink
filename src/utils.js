@@ -4,12 +4,10 @@ import zlib from 'zlib'
 
 function makeRequest(url, options) {
   return new Promise(async (resolve, reject) => {
-    let compression, data = ''
+    let data = ''
 
-    let agent = https.request
-    if (url.startsWith('http://')) agent = http.request
-
-    const req = agent(url, {
+    const agent = url.startsWith('https://') ? https : http
+    const req = agent.request(url, {
       method: options.method,
       headers: {
         'Accept-Encoding': 'br, gzip, deflate',
@@ -19,13 +17,16 @@ function makeRequest(url, options) {
       },
       port: options.port || (url.startsWith('https://') ? 443 : 80),
     }, (res) => {
+      const headers = res.headers
+      let compression;
+
       if (options.retrieveHeaders) {
         req.destroy()
 
-        return resolve(res.headers)
+        return resolve(headers)
       }
 
-      switch (res.headers['content-encoding']) {
+      switch (headers['content-encoding']) {
         case 'deflate': {
           compression = zlib.createInflate()
           break
@@ -48,16 +49,16 @@ function makeRequest(url, options) {
       res.on('data', (chunk) => (data += chunk))
 
       res.on('end', () => {
-        try {
+        if (headers['content-type'] == 'application/json')
           resolve(JSON.parse(data))
-        } catch {
+        else
           resolve(data)
-        }
       })
     })
 
     req.on('error', (error) => {
       console.log(`[FastLink] Failed sending HTTP request: ${error}`)
+
       reject()
     })
 

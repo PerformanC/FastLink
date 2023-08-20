@@ -10,11 +10,9 @@ import websocketClosed from './events/event/websocketClosed.js'
 import index from '../index.js'
 
 function handle(Event, payload, node, config, Nodes, Players) {
-  let temp = { Nodes, Players }
-
   switch (payload.op) {
     case 'ready': {
-      temp.Nodes = ready(Event, payload, node, config, Nodes, Players)
+      Nodes = ready(Event, payload, node, config, Nodes, Players)
 
       break
     }
@@ -26,7 +24,7 @@ function handle(Event, payload, node, config, Nodes, Players) {
     }
 
     case 'stats': {
-      temp.Nodes = stats(Event, payload, node, config, Nodes, Players)
+      Nodes = stats(Event, payload, node, config, Nodes, Players)
 
       break
     }
@@ -34,31 +32,31 @@ function handle(Event, payload, node, config, Nodes, Players) {
     case 'event': {
       switch (payload.type) {
         case 'TrackStartEvent': {
-          temp.Players = trackStart(Event, payload, node, config, Nodes, Players)
+          Players = trackStart(Event, payload, node, config, Nodes, Players)
         
           break
         }
 
         case 'TrackEndEvent': {
-          temp.Players = trackEnd(Event, payload, node, config, Nodes, Players)
+          Players = trackEnd(Event, payload, node, config, Nodes, Players)
 
           break
         }
 
         case 'TrackExceptionEvent': {
-          temp.Players = trackException(Event, payload, node, config, Nodes, Players)
+          Players = trackException(Event, payload, node, config, Nodes, Players)
 
           break
         }
 
         case 'TrackStuckEvent': {
-          temp.Players = trackStuck(Event, payload, node, config, Nodes, Players)
+          Players = trackStuck(Event, payload, node, config, Nodes, Players)
 
           break
         }
 
         case 'WebSocketClosedEvent': {
-          temp.Players = websocketClosed(Event, payload, node, config, Nodes, Players)
+          Players = websocketClosed(Event, payload, node, config, Nodes, Players)
 
           break
         }
@@ -66,7 +64,7 @@ function handle(Event, payload, node, config, Nodes, Players) {
     }
   }
 
-  return temp
+  return { Nodes, Players }
 }
 
 function open(node, config, Nodes) {
@@ -83,7 +81,7 @@ function message(Event, data, node, config, Nodes, Players) {
   return handle(Event, payload, node, config, Nodes, Players)
 }
 
-function close(Event, ws, node, config, Nodes, Players) {
+function close(ws, node, config, Nodes, Players) {
   if (config.debug) console.log(`[FastLink] Disconnected from ${node.hostname}`)
 
   ws.removeAllListeners()

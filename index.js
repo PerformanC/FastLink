@@ -12,7 +12,7 @@ import Pws from './src/ws.js'
 let Config = {}
 let Nodes = {}
 let Players = {}
-let voiceInfo = {}
+let sessionIds = {}
 
 const Event = new event()
 
@@ -40,8 +40,7 @@ function connectNodes(nodes, config) {
   if (!config.shards) throw new Error('No shards provided.')
   if (typeof config.shards != 'number') throw new Error('Shards must be a number.')
 
-  if (config.queue)
-    if (typeof config.queue != 'boolean') throw new Error('Queue must be a boolean.')
+  if (config.queue && typeof config.queue != 'boolean') throw new Error('Queue must be a boolean.')
 
   Config = {
     botId: config.botId,
@@ -59,7 +58,7 @@ function connectNodes(nodes, config) {
 
     if (typeof node.secure != 'boolean') throw new Error('Secure must be a boolean.')
 
-    if (!node.port) node.port = node.secure ? 443 : 2333
+    if (!node.port) node.port = 2333
 
     Nodes[node.hostname] = {
       ...node,
@@ -86,7 +85,7 @@ function connectNodes(nodes, config) {
     })
 
     ws.on('close', () => {
-      const temp = events.close(Event, ws, node, Config, Nodes, Players)
+      const temp = events.close(ws, node, Config, Nodes, Players)
 
       Nodes = temp.Nodes
       Players = temp.Players
@@ -105,62 +104,15 @@ function connectNodes(nodes, config) {
  * @returns {boolean} The boolean if any node is connected or not.
  */
 function anyNodeAvailable() {
-  let nodes = Object.values(Nodes).filter((node) => node.connected)
-
-  return !nodes ? false : true
+  return Object.values(Nodes).filter((node) => node?.connected).length == 0 ? false : true
 }
 
 function getRecommendedNode() {
-  let node = Object.values(Nodes).filter((node) => node.connected).sort((a, b) => (a.stats.systemLoad / a.stats.cores) * 100 - (b.stats.systemLoad / b.stats.cores) * 100)[0]
+  const nodes = Object.values(Nodes).filter((node) => node?.connected)
 
-  if (!node) throw new Error('No nodes connected.')
-
-  return node
-}
-
-/**
- * Creates a player for the specified guildId.
- *
- * @param {string} The ID of the guild for which the player is being created.
- * @throws {Error} If guildId is not provided or not a string.
- * @returns {string} The hostname of the recommended node for the player.
- */
-function createPlayer(guildId) {
-  if (!guildId) throw new Error('No guildId provided.')
-  if (typeof guildId != 'string') throw new Error('GuildId must be a string.')
-
-  if (Players[guildId]) return Players[guildId].node
-
-  const node = getRecommendedNode().hostname
-
-  Players[guildId] = {
-    connected: false,
-    playing: false,
-    paused: false,
-    volume: null,
-    node,
-  }
-
-  if (Config.queue) Players[guildId].queue = []
-  else Players[guildId].track = null
-
-  return node
-}
-
-/**
- * Retrieves the hostname of the node associated with the player for the specified guildId.
- *
- * @param {string} The ID of the guild for which the player is being retrieved.
- * @throws {Error} If guildId is not provided or not a string.
- * @returns {string|null} The hostname of the node associated with the player, or null if the player does not exist.
- */
-function getPlayer(guildId) {
-  if (!guildId) throw new Error('No guildId provided.')
-  if (typeof guildId != 'string') throw new Error('GuildId must be a string.')
-
-  if (!Players[guildId]) return null
-
-  return Players[guildId].node
+  if (nodes.length == 0) throw new Error('No node connected.')
+  
+  return nodes.sort((a, b) => (a.stats.systemLoad / a.stats.cores) * 100 - (b.stats.systemLoad / b.stats.cores) * 100)[0]
 }
 
 /**
@@ -172,21 +124,52 @@ class Player {
   /**
    * Constructs a Player object.
    *
-   * @param {string} The node to connect to.
-   * @param {string} The ID of the guild associated with the player.
-   * @throws {Error} If the node or guildId is not provided, or if they are of invalid type or do not exist.
+   * @param {string} The ID of the guild that will be associated with the player.
+   * @throws {Error} If the guildId is not provided, or if they are of invalid type.
    */
-  constructor(node, guildId) {
-    if (!node) throw new Error('No node provided.')
-    if (typeof node != 'string') throw new Error('Node must be a string.')
-  
-    if (!Nodes[node]) throw new Error('Node does not exist.')
-  
+  constructor(guildId) {  
     if (!guildId) throw new Error('No guildId provided.')
     if (typeof guildId != 'string') throw new Error('GuildId must be a string.')
 
-    this.node = node
     this.guildId = guildId
+    this.node = Players[this.guildId]?.node
+  }
+
+  /**
+   * Creates a player for the specified guildId.
+   *
+   * @param {string} The ID of the guild for which the player is being created.
+   * @throws {Error} If guildId is not provided or not a string.
+   * @returns {string} The hostname of the recommended node for the player.
+   */
+  createPlayer() {
+    if (Players[this.guildId])
+      throw new Error('Player already exists. Use playerCreated() to check if a player exists.')
+
+    const node = getRecommendedNode().hostname
+
+    Players[this.guildId] = {
+      connected: false,
+      playing: false,
+      paused: false,
+      volume: null,
+      node
+    }
+
+    if (Config.queue) Players[this.guildId].queue = []
+    else Players[this.guildId].track = null
+
+    this.node = node
+  }
+
+  /**
+   * Verifies if a player exists for the specified guildId.
+   * 
+   * @param {string} The ID of the guild for which the player is being retrieved.
+   * @returns {boolean} The boolean if the player exists or not.
+   */
+  playerCreated() {
+    return Players[this.guildId] ? true : false
   }
 
   /**
@@ -207,7 +190,7 @@ class Player {
     if (!sendPayload) throw new Error('No sendPayload provided.')
     if (typeof sendPayload != 'function') throw new Error('SendPayload must be a function.')
 
-    Players[this.guildId].connected = true
+    Players[this.guildId].connected = !!voiceId
   
     sendPayload(this.guildId, {
       op: 4,
@@ -231,11 +214,7 @@ class Player {
     if (!search) throw new Error('No search provided.')
     if (typeof search != 'string') throw new Error('Search must be a string.')
   
-    const data = await utils.makeRequest(`http${Nodes[this.node].secure ? 's' : ''}://${Nodes[this.node].hostname}:${Nodes[this.node].port}/v4/loadtracks?identifier=${encodeURIComponent(search)}`, {
-      headers: {
-        Authorization: Nodes[this.node].password
-      },
-      port: Nodes[this.node].port,
+    const data = await this.makeRequest(`/loadtracks?identifier=${encodeURIComponent(search)}`, {
       method: 'GET'
     })
   
@@ -253,12 +232,7 @@ class Player {
     if (!track) throw new Error('No track provided.')
     if (typeof track != 'string') throw new Error('Track must be a string.')
 
-    console.log(track)
-    const data = await utils.makeRequest(`http${Nodes[this.node].secure ? 's' : ''}://${Nodes[this.node].hostname}:${Nodes[this.node].port}/v4/loadcaptions?encodedTrack=${encodeURIComponent(track)}`, {
-      headers: {
-        Authorization: Nodes[this.node].password
-      },
-      port: Nodes[this.node].port,
+    const data = await this.makeRequest(`/loadcaptions?encodedTrack=${encodeURIComponent(track)}`, {
       method: 'GET'
     })
 
@@ -277,27 +251,20 @@ class Player {
     if (typeof body != 'object') throw new Error('Body must be an object.')
   
     if (body.encodedTrack && Config.queue) {
-      if (Players[this.guildId].queue.length > 0) {
-        Players[this.guildId].queue.push(body.encodedTrack)
-
-        return;
-      }
-
       Players[this.guildId].queue.push(body.encodedTrack)
+
+      if (Players[this.guildId].queue.length != 1) return;
     } else if (body.encodedTrack !== undefined) Players[this.guildId].queue = []
   
     if (body.encodedTracks) {
-      if (!Config.queue) throw new Error('Queue is disabled. (Config.queue = false)')
+      if (!Config.queue)
+        throw new Error('Queue is disabled. (Config.queue = false)')
   
       if (Players[this.guildId].queue.length == 0) {
         Players[this.guildId].queue = body.encodedTracks
   
-        utils.makeRequest(`http${Nodes[this.node].secure ? 's' : ''}://${Nodes[this.node].hostname}:${Nodes[this.node].port}/v4/sessions/${Nodes[this.node].sessionId}/players/${this.guildId}`, {
-          headers: {
-            Authorization: Nodes[this.node].password
-          },
+        this.makeRequest(`/sessions/${Nodes[this.node].sessionId}/players/${this.guildId}`, {
           body: { encodedTrack: body.encodedTracks[0] },
-          port: Nodes[this.node].port,
           method: 'PATCH'
         })
       } else body.encodedTracks.forEach((track) => Players[this.guildId].queue.push(track))
@@ -306,19 +273,12 @@ class Player {
     }
 
     if (body.paused !== undefined) {
-      if (body.paused) {
-        Players[this.guildId].playing = false
-        Players[this.guildId].paused = true
-      }
-      else Players[this.guildId].paused = false
+      Players[this.guildId].playing = !body.paused
+      Players[this.guildId].paused = body.paused
     }
   
-    const data = await utils.makeRequest(`http${Nodes[this.node].secure ? 's' : ''}://${Nodes[this.node].hostname}:${Nodes[this.node].port}/v4/sessions/${Nodes[this.node].sessionId}/players/${this.guildId}?noReplace=${noReplace !== true ? false : true}`, {
-      headers: {
-        Authorization: Nodes[this.node].password
-      },
+    const data = await this.makeRequest(`/sessions/${Nodes[this.node].sessionId}/players/${this.guildId}?noReplace=${noReplace !== true ? false : true}`, {
       body,
-      port: Nodes[this.node].port,
       method: 'PATCH'
     })
 
@@ -333,11 +293,7 @@ class Player {
   destroy() {  
     Nodes[this.node].players[this.guildId] = null
   
-    utils.makeRequest(`http${Nodes[this.node].secure ? 's' : ''}://${Nodes[this.node].hostname}:${Nodes[this.node].port}/v4/sessions/${Nodes[this.node].sessionId}/players/${this.guildId}`, {
-      headers: {
-        Authorization: Nodes[this.node].password
-      },
-      port: Nodes[this.node].port,
+    this.makeRequest(`/sessions/${Nodes[this.node].sessionId}/players/${this.guildId}`, {
       method: 'DELETE'
     })
   }
@@ -352,12 +308,8 @@ class Player {
     if (!data) throw new Error('No data provided.')
     if (typeof data != 'object') throw new Error('Data must be an object.')
   
-    utils.makeRequest(`http${Nodes[this.node].secure ? 's' : ''}://${Nodes[this.node].hostname}:${Nodes[this.node].port}/v4/sessions/${Nodes[this.node].sessionId}`, {
-      headers: {
-        Authorization: Nodes[this.node].password
-      },
+    this.makeRequest(`/sessions/${Nodes[this.node].sessionId}`, {
       body: data,
-      port: Nodes[this.node].port,
       method: 'PATCH'
     })
   }
@@ -383,22 +335,17 @@ class Player {
   skipTrack() {  
     if (!Config.queue) throw new Error('Queue is disabled. (Config.queue = false)')
 
-    if (Players[this.guildId].queue.length > 1) {
-      Players[this.guildId].queue.shift()
+    if (Players[this.guildId].queue.length < 1)
+      return { skipped: false, queue: [], error: 'No tracks in queue.' }
+
+    Players[this.guildId].queue.shift()
   
-      utils.makeRequest(`http${Nodes[this.node].secure ? 's' : ''}://${Nodes[this.node].hostname}:${Nodes[this.node].port}/v4/sessions/${Nodes[this.node].sessionId}/players/${this.guildId}`, {
-        headers: {
-          Authorization: Nodes[this.node].password
-        },
-        body: { encodedTrack: Players[this.guildId].queue[0] },
-        port: Nodes[this.node].port,
-        method: 'PATCH'
-      })
+    this.makeRequest(`/sessions/${Nodes[this.node].sessionId}/players/${this.guildId}`, {
+      body: { encodedTrack: Players[this.guildId].queue[0] },
+      method: 'PATCH'
+    })
   
-      return { skipped: true, queue: Players[this.guildId].queue, track: Players[this.guildId].queue[0] }
-    }
-  
-    return { skipped: false, queue: [], track: null, error: 'No tracks in queue.' }
+    return { skipped: true, queue: Players[this.guildId].queue }
   }
 
   /**
@@ -412,11 +359,7 @@ class Player {
     if (!track) throw new Error('No track provided.')
     if (typeof track != 'string') throw new Error('Track must be a string.')
   
-    const data = await utils.makeRequest(`http${Nodes[this.node].secure ? 's' : ''}://${Nodes[this.node].hostname}:${Nodes[this.node].port}/v4/decodetrack?encodedTrack=${track}`, {
-      headers: {
-        Authorization: Nodes[this.node].password
-      },
-      port: Nodes[this.node].port,
+    const data = await utils.makeRequest(`/decodetrack?encodedTrack=${track}`, {
       method: 'GET'
     })
   
@@ -434,12 +377,8 @@ class Player {
     if (!tracks) throw new Error('No tracks provided.')
     if (typeof tracks != 'object') throw new Error('Tracks must be an array.')
   
-    const data = await utils.makeRequest(`http${Nodes[this.node].secure ? 's' : ''}://${Nodes[this.node].hostname}:${Nodes[this.node].port}/v4/decodetracks`, {
-      headers: {
-        Authorization: Nodes[this.node].password
-      },
+    const data = await this.makeRequest(`/decodetracks`, {
       body: tracks,
-      port: Nodes[this.node].port,
       method: 'POST'
     })
   
@@ -460,14 +399,23 @@ class Player {
 
     if (lang && typeof lang != 'string') throw new Error('Lang must be a string.')
   
-    const data = await utils.makeRequest(`http${Nodes[this.node].secure ? 's' : ''}://${Nodes[this.node].hostname}:${Nodes[this.node].port}/v4/loadcaptions?encodedTrack=${track}${lang ? `&language=${lang}`: ''}`, {
-      headers: {
-        Authorization: Nodes[this.node].password
-      },
-      port: Nodes[this.node].port,
+    const data = await this.makeRequest(`/loadcaptions?encodedTrack=${track}${lang ? `&language=${lang}`: ''}`, {
       method: 'GET'
     })
   
+    return data
+  }
+
+  async makeRequest(path, options) {
+    const data = await utils.makeRequest(`http${Nodes[this.node].secure ? 's' : ''}://${Nodes[this.node].hostname}/v4${path}`, {
+      headers: {
+        Authorization: Nodes[this.node].password
+      },
+      body: options.body,
+      port: Nodes[this.node].port,
+      method: options.method
+    })
+
     return data
   }
 }
@@ -485,7 +433,7 @@ async function getPlayers(node) {
 
   if (!Nodes[node]) throw new Error('Node does not exist.')
 
-  const data = await utils.makeRequest(`http${Nodes[node].secure ? 's' : ''}://${Nodes[node].hostname}:${Nodes[node].port}/v4/sessions/${Nodes[node].sessionId}/players`,{
+  const data = await utils.makeRequest(`http${Nodes[node].secure ? 's' : ''}://${Nodes[node].hostname}/v4/sessions/${Nodes[node].sessionId}/players`,{
     headers: {
       Authorization: Nodes[node].password
     },
@@ -509,7 +457,7 @@ async function getInfo(node) {
 
   if (!Nodes[node]) throw new Error('Node does not exist.')
 
-  const data = await utils.makeRequest(`http${Nodes[node].secure ? 's' : ''}://${Nodes[node].hostname}:${Nodes[node].port}/v4/info`, {
+  const data = await utils.makeRequest(`http${Nodes[node].secure ? 's' : ''}://${Nodes[node].hostname}/v4/info`, {
     headers: {
       Authorization: Nodes[node].password
     },
@@ -533,7 +481,7 @@ async function getStats(node) {
 
   if (!Nodes[node]) throw new Error('Node does not exist.')
 
-  const data = await utils.makeRequest(`http${Nodes[node].secure ? 's' : ''}://${Nodes[node].hostname}:${Nodes[node].port}/v4/stats`, {
+  const data = await utils.makeRequest(`http${Nodes[node].secure ? 's' : ''}://${Nodes[node].hostname}/v4/stats`, {
     headers: {
       Authorization: Nodes[node].password
     },
@@ -557,7 +505,7 @@ async function getVersion(node) {
 
   if (!Nodes[node]) throw new Error('Node does not exist.')
 
-  const data = await utils.makeRequest(`http${Nodes[node].secure ? 's' : ''}://${Nodes[node].hostname}:${Nodes[node].port}/version`, {
+  const data = await utils.makeRequest(`http${Nodes[node].secure ? 's' : ''}://${Nodes[node].hostname}/version`, {
     headers: {
       Authorization: Nodes[node].password
     },
@@ -581,7 +529,7 @@ async function getRouterPlannerStatus(node) {
 
   if (!Nodes[node]) throw new Error('Node does not exist.')
 
-  const data = await utils.makeRequest(`http${Nodes[node].secure ? 's' : ''}://${Nodes[node].hostname}:${Nodes[node].port}/v4/routerplanner/status`, {
+  const data = await utils.makeRequest(`http${Nodes[node].secure ? 's' : ''}://${Nodes[node].hostname}/v4/routerplanner/status`, {
     headers: {
       Authorization: Nodes[node].password
     },
@@ -609,7 +557,7 @@ async function unmarkFailedAddress(node, address) {
   if (!address) throw new Error('No address provided.')
   if (typeof address != 'string') throw new Error('Address must be a string.')
 
-  const data = await utils.makeRequest(`http${Nodes[node].secure ? 's' : ''}://${Nodes[node].hostname}:${Nodes[node].port}/v4/routeplanner/free/address`, {
+  const data = await utils.makeRequest(`http${Nodes[node].secure ? 's' : ''}://${Nodes[node].hostname}/v4/routeplanner/free/address`, {
     headers: {
       Authorization: Nodes[node].password
     },
@@ -634,7 +582,7 @@ async function unmarkAllFailedAddresses(node) {
 
   if (!Nodes[node]) throw new Error('Node does not exist.')
 
-  const data = await utils.makeRequest(`http${Nodes[node].secure ? 's' : ''}://${Nodes[node].hostname}:${Nodes[node].port}/v4/routeplanner/free/all`, {
+  const data = await utils.makeRequest(`http${Nodes[node].secure ? 's' : ''}://${Nodes[node].hostname}/v4/routeplanner/free/all`, {
     headers: {
       Authorization: Nodes[node].password
     },
@@ -654,40 +602,28 @@ async function unmarkAllFailedAddresses(node) {
 function handleRaw(data) {
   switch (data.t) {
     case 'VOICE_SERVER_UPDATE': {
-      if (!voiceInfo[data.d.guild_id]) return;
+      if (!sessionIds[data.d.guild_id]) return;
 
-      const player = new Player(Players[data.d.guild_id].node, data.d.guild_id)
+      const player = new Player(data.d.guild_id)
+
+      if (!player.playerCreated()) return;
 
       player.update({
         voice: {
           token: data.d.token,
           endpoint: data.d.endpoint,
-          sessionId: voiceInfo[data.d.guild_id].sessionId
+          sessionId: sessionIds[data.d.guild_id]
         }
       })
 
-      voiceInfo[data.d.guild_id] = { token: data.d.token, endpoint: data.d.endpoint }
+      delete sessionIds[data.d.guild_id]
 
       break
     }
 
     case 'VOICE_STATE_UPDATE': {
-      if (data.d.member.user.id == Config.botId) {
-        if (!voiceInfo[data.d.guild_id]) voiceInfo[data.d.guild_id] = { sessionId: data.d.session_id }
-        else voiceInfo[data.d.guild_id].sessionId = data.d.session_id
-
-        if (voiceInfo[data.d.guild_id].token) {
-          const player = new Player(Players[data.d.guild_id].node, data.d.guild_id)
-  
-          player.update({
-            voice: {
-              token: voiceInfo[data.d.guild_id].token,
-              endpoint: voiceInfo[data.d.guild_id].endpoint,
-              sessionId: data.d.session_id
-            }
-          })
-        }
-      }
+      if (data.d.member.user.id == Config.botId)
+        sessionIds[data.d.guild_id] = data.d.session_id
 
       break
     }
@@ -700,8 +636,6 @@ export default {
     anyNodeAvailable
   },
   player: {
-    createPlayer,
-    getPlayer,
     Player,
     getPlayers
   },

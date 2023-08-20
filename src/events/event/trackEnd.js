@@ -7,14 +7,11 @@ function trackEnd(Event, payload, node, config, Nodes, Players) {
 
   if (!player) return console.log(`[FastLink] Received TrackEndEvent from ${node} but no player was found`)
 
-  player.playing = false
-  player.volume = null
-
   if (config.queue && payload.reason != 'replaced') {
     player.queue.shift()
 
     if (player.queue.length > 0) {
-      utils.makeRequest(`http${Nodes[node].secure ? 's' : ''}://${Nodes[node].hostname}:${Nodes[node].port}/v4/sessions/${Nodes[node].sessionId}/players/${payload.guildId}`, {
+      utils.makeRequest(`http${Nodes[node].secure ? 's' : ''}://${Nodes[node].hostname}/v4/sessions/${Nodes[node].sessionId}/players/${payload.guildId}`, {
         headers: {
           Authorization: Nodes[node].password
         },
@@ -25,10 +22,12 @@ function trackEnd(Event, payload, node, config, Nodes, Players) {
         method: 'PATCH'
       })
 
-      player.playing = true
-      player.volume = 100
+      return Players
     }
   } else player.track = null
+
+  player.playing = false
+  player.volume = null
 
   Event.emit('trackEnd', { node: Nodes[node], guildId: payload.guildId, player, track: payload.track  })
 

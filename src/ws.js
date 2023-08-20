@@ -2,7 +2,6 @@ import net from 'node:net'
 import { URL } from 'node:url'
 import crypto from 'node:crypto'
 import EventEmitter from 'node:events'
-import { constants } from 'node:buffer'
 
 class WebSocket extends EventEmitter {
   constructor(url, options) {
@@ -15,14 +14,6 @@ class WebSocket extends EventEmitter {
     this.connect()
 
     return this
-  }
-
-  send(data) {
-    const frame = createFrame(data)
-
-    this.events.emit('send', frame)
-
-    this.events.socket.write(frame)
   }
 
   connect() {
@@ -55,9 +46,7 @@ class WebSocket extends EventEmitter {
       this.emit('connect', this.socket)
     })
   
-    this.socket.on('data', (data) => {
-      console.log(`[PWS] Received data from ${parsedUrl.hostname}`)
-  
+    this.socket.on('data', (data) => {  
       const response = data.toString().split('\r\n')
 
       if (response[0].startsWith('HTTP/1.1')) {
