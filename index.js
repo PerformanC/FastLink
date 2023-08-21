@@ -222,20 +222,23 @@ class Player {
   }
 
   /**
-   * Retrieves the captions for a given track. NodeLink exclusive.
+   * Loads captions for a given track.
    * 
-   * @param {string} The track to retrieve captions for.
+   * @param {string} The track to load captions for.
+   * @param {string?} The language to load captions for.
    * @throws {Error} If the track is not provided or is of invalid type.
-   * @return {Promise} A Promise that resolves to the retrieved captions data.
+   * @return {Promise} A Promise that resolves to the loaded captions data.
    */
-  async getCaptions(track) {
+  async loadCaptions(track, lang) {  
     if (!track) throw new Error('No track provided.')
     if (typeof track != 'string') throw new Error('Track must be a string.')
 
-    const data = await this.makeRequest(`/loadcaptions?encodedTrack=${encodeURIComponent(track)}`, {
+    if (lang && typeof lang != 'string') throw new Error('Lang must be a string.')
+  
+    const data = await this.makeRequest(`/loadcaptions?encodedTrack=${encodeURIComponent(track)}${lang ? `&language=${lang}`: ''}`, {
       method: 'GET'
     })
-
+  
     return data
   }
 
@@ -380,27 +383,6 @@ class Player {
     const data = await this.makeRequest(`/decodetracks`, {
       body: tracks,
       method: 'POST'
-    })
-  
-    return data
-  }
-
-  /**
-   * Loads captions for a given track.
-   * 
-   * @param {string} The track to load captions for.
-   * @param {string?} The language to load captions for.
-   * @throws {Error} If the track is not provided or is of invalid type.
-   * @return {Promise} A Promise that resolves to the loaded captions data.
-   */
-  async loadCaptions(track, lang) {  
-    if (!track) throw new Error('No track provided.')
-    if (typeof track != 'string') throw new Error('Track must be a string.')
-
-    if (lang && typeof lang != 'string') throw new Error('Lang must be a string.')
-  
-    const data = await this.makeRequest(`/loadcaptions?encodedTrack=${track}${lang ? `&language=${lang}`: ''}`, {
-      method: 'GET'
     })
   
     return data
