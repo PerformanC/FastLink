@@ -338,7 +338,7 @@ class Player {
   skipTrack() {  
     if (!Config.queue) throw new Error('Queue is disabled. (Config.queue = false)')
 
-    if (Players[this.guildId].queue.length < 1)
+    if (Players[this.guildId].queue.length <= 1)
       return { skipped: false, queue: [], error: 'No tracks in queue.' }
 
     Players[this.guildId].queue.shift()
