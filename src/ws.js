@@ -1,7 +1,10 @@
 import net from 'node:net'
-import { URL } from 'node:url'
+import tls from 'node:tls'
+import https from 'node:https'
+import http from 'node:http'
 import crypto from 'node:crypto'
 import EventEmitter from 'node:events'
+import { URL } from 'node:url'
 
 class WebSocket extends EventEmitter {
   constructor(url, options) {
@@ -18,78 +21,88 @@ class WebSocket extends EventEmitter {
 
   connect() {
     const parsedUrl = new URL(this.url)
-    const agent = parsedUrl.protocol === 'wss:' ? tls : net
-    
-    this.socket = agent.connect({
-      host: parsedUrl.hostname,
-      port: parsedUrl.port || (parsedUrl.protocol === 'wss:' ? 443 : 80)
+    const isSecure = parsedUrl.protocol === 'wss:'
+    const agent = isSecure ? https : http
+
+    this.socket = agent.request((isSecure ? 'https://' : 'http://') + parsedUrl.hostname + parsedUrl.pathname, {
+      port: parsedUrl.port || (isSecure ? 443 : 80),
+      timeout: this.options.timeout || 5000,
+      createConnection: (options) => {
+        if (isSecure) {
+          options.path = undefined
+
+          if (!options.servername && options.servername != '')
+            options.servername = net.isIP(options.host) ? '' : options.host
+
+          return tls.connect(options)
+        } else {
+          options.path = options.socketPath
+
+          return net.connect(options)
+        }
+      },
+      headers: {
+        'Sec-WebSocket-Key': crypto.randomBytes(16).toString('base64'),
+        'Sec-WebSocket-Version': 13,
+        'Upgrade': 'websocket',
+        'Connection': 'Upgrade',
+        ...(this.options.headers || {})
+      },
+      method: 'GET'
     })
 
-    const headers = [
-      `GET ${parsedUrl.pathname}${parsedUrl.search} HTTP/1.1`,
-      `Host: ${parsedUrl.host}`,
-      'Upgrade: websocket',
-      'Connection: Upgrade',
-      `Sec-WebSocket-Key: ${crypto.randomBytes(16).toString('base64')}`,
-      'Sec-WebSocket-Version: 13'
-    ]
-
-    if (this.options.headers) {
-      Object.keys(this.options.headers).forEach((key) => {
-        headers.push(`${key}: ${this.options.headers[key]}`)
-      })
-    }
-  
-    this.socket.on('connect', () => {
-      this.socket.write(headers.join('\r\n') + '\r\n\r\n')
-  
-      this.emit('connect', this.socket)
+    this.socket.on('error', (err) => {
+      this.emit('error', err)
     })
-  
-    this.socket.on('data', (data) => {  
-      const response = data.toString().split('\r\n')
 
-      if (response[0].startsWith('HTTP/1.1')) {
-        const parsedResponse = response[0].split(' ')
-        const statusCode = Number(parsedResponse[1])
-        const statusMessage = parsedResponse[2]
+    this.socket.on('upgrade', (res, socket, head) => {
+      if (res.statusCode != 101) {
+        this.emit('error', new Error(`${res.statusCode} ${res.statusMessage}`))
 
-        if (statusCode >= 400 || statusCode >= 500) {
-          this.emit('error', new Error(`${statusCode} ${statusMessage}`))
-  
-          return;
-        }
-
-        if (statusCode == 101) {
-          const message = response[response.length - 1]
-
-          if (message != '') {
-            const frameHeader = parseFrameHeader(message)
-  
-            this.emit('error', new Error(message.slice(frameHeader.payloadStartIndex)))
-    
-            return;
-          }
-  
-          this.emit('open', this.socket)
-    
-          return;
-        }
+        return;
       }
+      
+      socket.on('data', (data) => {
+        const frameHeader = parseFrameHeader(data)
+        const payload = data.subarray(frameHeader.payloadStartIndex)
 
-      const frameHeader = parseFrameHeader(data)
-      const payload = data.slice(frameHeader.payloadStartIndex)
-  
-      this.emit('message', payload)
+        this.emit('message', payload.toString())
+      })
+
+      socket.on('error', (err) => {
+        console.error('WebSocket error:', err);
+        this.emit('error', err);
+      })
+
+      this.emit('open', socket)
     })
-  
-    this.socket.on('close', () => this.emit('close', this.socket))
 
-    this.socket.on('end', () => this.emit('close', this.socket))
-  
-    this.socket.on('error', (error) => this.emit('error', error))
+    this.socket.on('socket', (req) => {
+      req.on('close', () => this.emit('close'))
 
-    this.socket.on('timeout', () => this.emit('timeout', this.socket))
+      req.on('end', () => this.emit('end'))
+    
+      req.on('timeout', () => this.emit('timeout'))
+
+      req.on(isSecure ? 'secureConnect' : 'connect', () => {
+        const headers = [
+          `GET ${parsedUrl.pathname}${parsedUrl.search} HTTP/1.1`,
+          `Host: ${parsedUrl.host}`,
+          'Upgrade: websocket',
+          'Connection: Upgrade',
+          `Sec-WebSocket-Key: ${crypto.randomBytes(16).toString('base64')}`,
+          'Sec-WebSocket-Version: 13'
+        ]
+
+        if (this.options.headers) {
+          Object.keys(this.options.headers).forEach((key) => {
+            headers.push(`${key}: ${this.options.headers[key]}`)
+          })
+        }
+
+        req.write(headers.join('\r\n') + '\r\n\r\n')
+      })
+    })
   }
 
   sendFrame(data, options) {
@@ -104,19 +117,18 @@ class WebSocket extends EventEmitter {
       payloadLength = 126
     }
 
-    const target = Buffer.allocUnsafe(payloadStartIndex)
-
-    target[0] = options.fin ? options.opcode | 0x80 : options.opcode
-    target[1] = payloadLength
+    const header = Buffer.allocUnsafe(payloadStartIndex)
+    header[0] = options.fin ? options.opcode | 0x80 : options.opcode
+    header[1] = payloadLength
 
     if (payloadLength == 126) {
-      target.writeUInt16BE(options.len, 2)
+      header.writeUInt16BE(options.len, 2)
     } else if (payloadLength == 127) {
-      target[2] = target[3] = 0
-      target.writeUIntBE(options.len, 4, 6)
+      header[2] = header[3] = 0
+      header.writeUIntBE(options.len, 4, 6)
     }
 
-    if (!this.socket.write(Buffer.concat([target, data]))) {
+    if (!this.socket.write(Buffer.concat([header, data]))) {
       this.socket.end()
 
       return false
