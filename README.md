@@ -27,6 +27,19 @@ And that's it, you'll be able to use FastLink in your project.
 
 ```js
 import Lavalink from 'fastlink'
+import Discord from 'discord.js'
+
+const client = new Discord.Client({
+  Partials: [
+    Discord.Partials.Channel
+  ],
+  intents: [
+    Discord.IntentsBitField.Flags.Guilds,
+    Discord.IntentsBitField.Flags.MessageContent,
+    Discord.IntentsBitField.Flags.GuildMessages,
+    Discord.IntentsBitField.Flags.GuildVoiceStates
+  ]
+})
 
 const events = Lavalink.node.connectNodes([{
   hostname: '127.0.0.1',
@@ -39,6 +52,8 @@ const events = Lavalink.node.connectNodes([{
   queue: true,
   debug: true
 })
+
+const prefix = '!'
 
 client.on('messageCreate', async (message) => {
   if (message.content.startsWith(prefix + 'decodetrack')) {
@@ -102,7 +117,7 @@ client.on('messageCreate', async (message) => {
     if (player.playerCreated() == false) 
       return message.channel.send('No player found.')
 
-    Lavalink.player.update(player, message.guild.id, {
+    player.update({
       volume: parseInt(message.content.replace(prefix + 'volume ', ''))
     })
   }
