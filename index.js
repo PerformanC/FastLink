@@ -31,9 +31,6 @@ function connectNodes(nodes, config) {
   if (!config) throw new Error('No config provided.')
   if (typeof config != 'object') throw new Error('Config must be an object.')
 
-  if (config.debug == undefined) throw new Error('No debug provided.')
-  if (typeof config.debug != 'boolean') throw new Error('Debug must be a boolean.')
-
   if (!config.botId) throw new Error('No botId provided.')
   if (typeof config.botId != 'string') throw new Error('BotId must be a string.')
 
@@ -45,8 +42,7 @@ function connectNodes(nodes, config) {
   Config = {
     botId: config.botId,
     shards: config.shards,
-    queue: config.queue || false,
-    debug: config.debug || false
+    queue: config.queue || false
   }
 
   nodes.forEach((node) => {
@@ -75,7 +71,7 @@ function connectNodes(nodes, config) {
       }
     })
 
-    ws.on('open', () => Nodes = events.open(node.hostname, Config, Nodes))
+    ws.on('open', () => Nodes = events.open(Event, node.hostname, Nodes))
 
     ws.on('message', (data) => {
       const temp = events.message(Event, data, node.hostname, Config, Nodes, Players)
@@ -85,14 +81,14 @@ function connectNodes(nodes, config) {
     })
 
     ws.on('close', () => {
-      const temp = events.close(ws, node, Config, Nodes, Players)
+      const temp = events.close(Event, ws, node, Config, Nodes, Players)
 
       Nodes = temp.Nodes
       Players = temp.Players
       ws = temp.ws
     })
 
-    ws.on('error', (err) => Nodes = events.error(err, node.hostname, Config, Nodes))
+    ws.on('error', (err) => Nodes = events.error(Event, err, node.hostname, Nodes))
   })
 
   return Event

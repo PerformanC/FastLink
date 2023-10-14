@@ -49,11 +49,12 @@ const events = Lavalink.node.connectNodes([{
 }], {
   botId: 'Your bot Id here',
   shards: 1,
-  queue: true,
-  debug: true
+  queue: true
 })
 
 const prefix = '!'
+
+events.on('debug', console.log)
 
 client.on('messageCreate', async (message) => {
   if (message.content.startsWith(prefix + 'decodetrack')) {

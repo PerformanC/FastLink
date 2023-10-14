@@ -1,7 +1,7 @@
 function trackStuck(Event, payload, node, config, Nodes, Players) {
-  if (config.debug) console.log(`[FastLink] ${node} has received a track stuck event`)
+  Event.emit('debug', `[FastLink] ${node} has received a track stuck event`)
 
-  let player = Players[payload.guildId]
+  const player = Players[payload.guildId]
 
   if (!player) return console.log(`[FastLink] Received TrackStuckEvent from ${node} but no player was found`)
 

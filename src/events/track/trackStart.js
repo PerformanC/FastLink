@@ -1,7 +1,7 @@
 function trackStart(Event, payload, node, config, Nodes, Players) {
-  if (config.debug) console.log(`[FastLink] ${node} has started a track`)
+  Event.emit('debug', `[FastLink] ${node} has started a track`)
 
-  let player = Players[payload.guildId]
+  const player = Players[payload.guildId]
 
   if (!player) return console.log(`[FastLink] Received TrackStartEvent from ${node} but no player was found`)
 

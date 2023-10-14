@@ -1,5 +1,5 @@
-function stats(Event, payload, node, config, Nodes) {
-  if (config.debug) console.log(`[FastLink] Received stats from ${node}`)
+function stats(Event, payload, node, Nodes) {
+  Event.emit('debug', `[FastLink] Received stats from ${node}`)
 
   Nodes[node].stats = {
     cores: payload.cpu.cores,
