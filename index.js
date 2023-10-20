@@ -358,7 +358,7 @@ class Player {
     if (!track) throw new Error('No track provided.')
     if (typeof track != 'string') throw new Error('Track must be a string.')
   
-    const data = await utils.makeRequest(`/decodetrack?encodedTrack=${track}`, {
+    const data = await this.makeRequest(`/decodetrack?encodedTrack=${track}`, {
       method: 'GET'
     })
   
@@ -385,16 +385,7 @@ class Player {
   }
 
   async makeRequest(path, options) {
-    const data = await utils.makeRequest(`http${Nodes[this.node].secure ? 's' : ''}://${Nodes[this.node].hostname}/v4${path}`, {
-      headers: {
-        Authorization: Nodes[this.node].password
-      },
-      body: options.body,
-      port: Nodes[this.node].port,
-      method: options.method
-    })
-
-    return data
+    return await utils.makeNodeRequest(Nodes, this.node, `/v4${path}`, options)
   }
 }
 
@@ -411,15 +402,7 @@ async function getPlayers(node) {
 
   if (!Nodes[node]) throw new Error('Node does not exist.')
 
-  const data = await utils.makeRequest(`http${Nodes[node].secure ? 's' : ''}://${Nodes[node].hostname}/v4/sessions/${Nodes[node].sessionId}/players`,{
-    headers: {
-      Authorization: Nodes[node].password
-    },
-    port: Nodes[node].port,
-    method: 'GET'
-  })
-
-  return data
+  return await utils.makeNodeRequest(Nodes, node, '/v4/sessions', { method: 'GET' })
 }
 
 /**
@@ -435,15 +418,7 @@ async function getInfo(node) {
 
   if (!Nodes[node]) throw new Error('Node does not exist.')
 
-  const data = await utils.makeRequest(`http${Nodes[node].secure ? 's' : ''}://${Nodes[node].hostname}/v4/info`, {
-    headers: {
-      Authorization: Nodes[node].password
-    },
-    port: Nodes[node].port,
-    method: 'GET'
-  })
-
-  return data
+  return await utils.makeNodeRequest(Nodes, node, '/v4/info', { method: 'GET' })
 }
 
 /**
@@ -459,15 +434,7 @@ async function getStats(node) {
 
   if (!Nodes[node]) throw new Error('Node does not exist.')
 
-  const data = await utils.makeRequest(`http${Nodes[node].secure ? 's' : ''}://${Nodes[node].hostname}/v4/stats`, {
-    headers: {
-      Authorization: Nodes[node].password
-    },
-    port: Nodes[node].port,
-    method: 'GET'
-  })
-
-  return data
+  return await utils.makeNodeRequest(Nodes, node, '/v4/stats', { method: 'GET' })
 }
 
 /**
@@ -483,15 +450,7 @@ async function getVersion(node) {
 
   if (!Nodes[node]) throw new Error('Node does not exist.')
 
-  const data = await utils.makeRequest(`http${Nodes[node].secure ? 's' : ''}://${Nodes[node].hostname}/version`, {
-    headers: {
-      Authorization: Nodes[node].password
-    },
-    port: Nodes[node].port,
-    method: 'GET'
-  })
-
-  return data
+  return await utils.makeNodeRequest(Nodes, node, '/version', { method: 'GET' })
 }
 
 /**
@@ -507,15 +466,7 @@ async function getRouterPlannerStatus(node) {
 
   if (!Nodes[node]) throw new Error('Node does not exist.')
 
-  const data = await utils.makeRequest(`http${Nodes[node].secure ? 's' : ''}://${Nodes[node].hostname}/v4/routerplanner/status`, {
-    headers: {
-      Authorization: Nodes[node].password
-    },
-    port: Nodes[node].port,
-    method: 'GET'
-  })
-
-  return data
+  return await utils.makeNodeRequest(Nodes, node, '/v4/routerplanner/status', { method: 'GET' })
 }
 
 /**
@@ -535,16 +486,10 @@ async function unmarkFailedAddress(node, address) {
   if (!address) throw new Error('No address provided.')
   if (typeof address != 'string') throw new Error('Address must be a string.')
 
-  const data = await utils.makeRequest(`http${Nodes[node].secure ? 's' : ''}://${Nodes[node].hostname}/v4/routeplanner/free/address`, {
-    headers: {
-      Authorization: Nodes[node].password
-    },
-    body: { address },
-    port: Nodes[node].port,
-    method: 'GET'
+  return await utils.makeNodeRequest(Nodes, node, `/v4/routerplanner/free/address?address=${encodeURIComponent(address)}`, {
+    method: 'GET',
+    body: { address }
   })
-
-  return data
 }
 
 /**
@@ -560,15 +505,7 @@ async function unmarkAllFailedAddresses(node) {
 
   if (!Nodes[node]) throw new Error('Node does not exist.')
 
-  const data = await utils.makeRequest(`http${Nodes[node].secure ? 's' : ''}://${Nodes[node].hostname}/v4/routeplanner/free/all`, {
-    headers: {
-      Authorization: Nodes[node].password
-    },
-    port: Nodes[node].port,
-    method: 'GET'
-  })
-
-  return data
+  return await utils.makeNodeRequest(Nodes, node, '/v4/routerplanner/free/all', { method: 'GET' })
 }
 
 /**

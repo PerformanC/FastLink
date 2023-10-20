@@ -11,14 +11,10 @@ function trackEnd(Event, payload, node, config, Nodes, Players) {
     player.queue.shift()
 
     if (player.queue.length != 0) {
-      utils.makeRequest(`http${Nodes[node].secure ? 's' : ''}://${Nodes[node].hostname}/v4/sessions/${Nodes[node].sessionId}/players/${payload.guildId}`, {
-        headers: {
-          Authorization: Nodes[node].password
-        },
+      utils.makeNodeRequest(Nodes, node, `/v4/sessions/${Nodes[node].sessionId}/players/${payload.guildId}`, {
         body: {
           encodedTrack: player.queue[0]
         },
-        port: Nodes[node].port,
         method: 'PATCH'
       })
 

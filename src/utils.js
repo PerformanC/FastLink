@@ -2,20 +2,20 @@ import http from 'http'
 import https from 'https'
 import zlib from 'zlib'
 
-function makeRequest(url, options) {
+async function makeNodeRequest(Nodes, node, endpoint, options) {
   return new Promise(async (resolve, reject) => {
     let data = ''
 
-    const agent = url.startsWith('https://') ? https : http
-    const req = agent.request(url, {
+    const agent = Nodes[node].secure ? https : http
+    const req = agent.request(`http${Nodes[node].secure ? 's' : ''}://${Nodes[node].hostname}${endpoint}`, {
       method: options.method,
       headers: {
         'Accept-Encoding': 'br, gzip, deflate',
         'User-Agent': 'FastLink',
         'Content-Type': 'application/json',
-        ...(options.headers || {})
+        'Authorization': Nodes[node].password,
       },
-      port: options.port || (url.startsWith('https://') ? 443 : 80),
+      port: Nodes[node].port || (Nodes[node].secure ? 443 : 80),
     }, (res) => {
       const headers = res.headers
       let compression;
@@ -71,5 +71,5 @@ function makeRequest(url, options) {
 }
 
 export default {
-  makeRequest
+  makeNodeRequest
 }
