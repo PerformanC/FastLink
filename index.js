@@ -12,7 +12,7 @@ import Pws from './src/ws.js'
 let Config = {}
 let Nodes = {}
 let Players = {}
-let sessionIds = {}
+const sessionIds = {}
 
 const Event = new event()
 
@@ -62,7 +62,7 @@ function connectNodes(nodes, config) {
       sessionId: null
     }
 
-    let ws = new Pws(`ws${node.secure ? 's' : ''}://${node.hostname}:${node.port}/v4/websocket`, {
+    let ws = new Pws(`ws${node.secure ? 's' : ''}://${node.hostname}${node.port ? `:${node.port}` : ''}/v4/websocket`, {
       headers: {
         Authorization: node.password,
         'Num-Shards': config.shards,
@@ -71,24 +71,24 @@ function connectNodes(nodes, config) {
       }
     })
 
-    ws.on('open', () => Nodes = events.open(Event, node.hostname, Nodes))
+    ws.on('open', () => events.open(Event, node.hostname))
 
     ws.on('message', (data) => {
-      const temp = events.message(Event, data, node.hostname, Config, Nodes, Players)
+      const tmp = events.message(Event, data, node.hostname, Config, Nodes, Players)
 
-      Nodes = temp.Nodes
-      Players = temp.Players
+      Nodes = tmp.Nodes
+      Players = tmp.Players
     })
 
-    ws.on('close', () => {
-      const temp = events.close(Event, ws, node, Config, Nodes, Players)
+    ws.on('close', async () => {
+      const tmp = await events.close(Event, ws, node, Config, Nodes, Players)
 
-      Nodes = temp.Nodes
-      Players = temp.Players
-      ws = temp.ws
+      Nodes = tmp.Nodes
+      Players = tmp.Players
+      ws = tmp.ws
     })
 
-    ws.on('error', (err) => Nodes = events.error(Event, err, node.hostname, Nodes))
+    ws.on('error', (err) => events.error(Event, err, node.hostname))
   })
 
   return Event
@@ -206,15 +206,13 @@ class Player {
    * @return {TrackData} The loaded track data.
    * @throws {Error} If the search is not provided or is of invalid type.
    */
-  async loadTrack(search) {  
+  loadTrack(search) {  
     if (!search) throw new Error('No search provided.')
     if (typeof search != 'string') throw new Error('Search must be a string.')
   
-    const data = await this.makeRequest(`/loadtracks?identifier=${encodeURIComponent(search)}`, {
+    return this.makeRequest(`/loadtracks?identifier=${encodeURIComponent(search)}`, {
       method: 'GET'
     })
-  
-    return data
   }
 
   /**
@@ -225,17 +223,15 @@ class Player {
    * @throws {Error} If the track is not provided or is of invalid type.
    * @return {Promise} A Promise that resolves to the loaded captions data.
    */
-  async loadCaptions(track, lang) {  
+  loadCaptions(track, lang) {  
     if (!track) throw new Error('No track provided.')
     if (typeof track != 'string') throw new Error('Track must be a string.')
 
     if (lang && typeof lang != 'string') throw new Error('Lang must be a string.')
   
-    const data = await this.makeRequest(`/loadcaptions?encodedTrack=${encodeURIComponent(track)}${lang ? `&language=${lang}`: ''}`, {
+    return this.makeRequest(`/loadcaptions?encodedTrack=${encodeURIComponent(track)}${lang ? `&language=${lang}`: ''}`, {
       method: 'GET'
     })
-  
-    return data
   }
 
   /**
@@ -245,7 +241,7 @@ class Player {
    * @param {boolean} Optional flag to specify whether to replace the existing track or not.
    * @throws {Error} If the body is not provided or is of invalid type.
    */
-  async update(body, noReplace) {  
+  update(body, noReplace) {  
     if (!body) throw new Error('No body provided.')
     if (typeof body != 'object') throw new Error('Body must be an object.')
   
@@ -257,7 +253,7 @@ class Player {
   
     if (body.encodedTracks) {
       if (!Config.queue)
-        throw new Error('Queue is disabled. (Config.queue = false)')
+        throw new Error('Queue is disabled.')
   
       if (Players[this.guildId].queue.length == 0) {
         Players[this.guildId].queue = body.encodedTracks
@@ -276,12 +272,10 @@ class Player {
       Players[this.guildId].paused = body.paused
     }
   
-    const data = await this.makeRequest(`/sessions/${Nodes[this.node].sessionId}/players/${this.guildId}?noReplace=${noReplace !== true ? false : true}`, {
+    return this.makeRequest(`/sessions/${Nodes[this.node].sessionId}/players/${this.guildId}?noReplace=${noReplace !== true ? false : true}`, {
       body,
       method: 'PATCH'
     })
-
-    return data
   }
 
   /**
@@ -320,7 +314,7 @@ class Player {
    * @throws {Error} If the queue is disabled.
    */
   getQueue() {  
-    if (!Config.queue) throw new Error('Queue is disabled. (Config.queue = false)')
+    if (!Config.queue) throw new Error('Queue is disabled.')
   
     return Players[this.guildId].queue
   }
@@ -328,14 +322,14 @@ class Player {
   /**
    * Skips the currently playing track.
    *
-   * @return {SkipResult} The skipped track data.
+   * @return {Array<TrackData> | null} The queue of tracks.
    * @throws {Error} If the queue is disabled or there are no tracks in the queue.
    */
   skipTrack() {  
-    if (!Config.queue) throw new Error('Queue is disabled. (Config.queue = false)')
+    if (!Config.queue) throw new Error('Queue is disabled.')
 
-    if (Players[this.guildId].queue.length <= 1)
-      return { skipped: false, queue: [], error: 'No tracks in queue.' }
+    if (Players[this.guildId].queue.length == 1)
+      return null
 
     Players[this.guildId].queue.shift()
   
@@ -344,7 +338,7 @@ class Player {
       method: 'PATCH'
     })
   
-    return { skipped: true, queue: Players[this.guildId].queue }
+    return Players[this.guildId].queue
   }
 
   /**
@@ -354,15 +348,13 @@ class Player {
    * @throws {Error} If a track is not provided or if track is not a string.
    * @return {Promise} A Promise that resolves to the decoded data.
    */
-  async decodeTrack(track) {  
+  decodeTrack(track) {  
     if (!track) throw new Error('No track provided.')
     if (typeof track != 'string') throw new Error('Track must be a string.')
   
-    const data = await this.makeRequest(`/decodetrack?encodedTrack=${track}`, {
+    return this.makeRequest(`/decodetrack?encodedTrack=${track}`, {
       method: 'GET'
     })
-  
-    return data
   }
   
   /**
@@ -372,16 +364,14 @@ class Player {
    * @throws {Error} If no tracks are provided or if tracks is not an array.
    * @return {Promise} A Promise that resolves to the decoded data.
    */
-  async decodeTracks(tracks) {  
+  decodeTracks(tracks) {  
     if (!tracks) throw new Error('No tracks provided.')
     if (typeof tracks != 'object') throw new Error('Tracks must be an array.')
   
-    const data = await this.makeRequest(`/decodetracks`, {
+    return this.makeRequest(`/decodetracks`, {
       body: tracks,
       method: 'POST'
     })
-  
-    return data
   }
 
   async makeRequest(path, options) {
@@ -396,13 +386,13 @@ class Player {
  * @throws {Error} If no node is provided or if node is not a string.
  * @return {Promise} A Promise that resolves to the retrieved player data.
  */
-async function getPlayers(node) {
+function getPlayers(node) {
   if (!node) throw new Error('No node provided.')
   if (typeof node != 'string') throw new Error('Node must be a string.')
 
   if (!Nodes[node]) throw new Error('Node does not exist.')
 
-  return await utils.makeNodeRequest(Nodes, node, '/v4/sessions', { method: 'GET' })
+  return utils.makeNodeRequest(Nodes, node, '/v4/sessions', { method: 'GET' })
 }
 
 /**
@@ -412,13 +402,13 @@ async function getPlayers(node) {
  * @throws {Error} If no node is provided or if node is not a string.
  * @return {Promise} A Promise that resolves to the retrieved info data.
  */
-async function getInfo(node) {
+function getInfo(node) {
   if (!node) throw new Error('No node provided.')
   if (typeof node != 'string') throw new Error('Node must be a string.')
 
   if (!Nodes[node]) throw new Error('Node does not exist.')
 
-  return await utils.makeNodeRequest(Nodes, node, '/v4/info', { method: 'GET' })
+  return utils.makeNodeRequest(Nodes, node, '/v4/info', { method: 'GET' })
 }
 
 /**
@@ -428,13 +418,13 @@ async function getInfo(node) {
  * @throws {Error} If no node is provided or if node is not a string.
  * @return {Promise} A Promise that resolves to the retrieved stats data.
  */
-async function getStats(node) {
+function getStats(node) {
   if (!node) throw new Error('No node provided.')
   if (typeof node != 'string') throw new Error('Node must be a string.')
 
   if (!Nodes[node]) throw new Error('Node does not exist.')
 
-  return await utils.makeNodeRequest(Nodes, node, '/v4/stats', { method: 'GET' })
+  return utils.makeNodeRequest(Nodes, node, '/v4/stats', { method: 'GET' })
 }
 
 /**
@@ -444,13 +434,13 @@ async function getStats(node) {
  * @throws {Error} If no node is provided or if node is not a string.
  * @return {Promise} A Promise that resolves to the retrieved version data.
  */
-async function getVersion(node) {
+function getVersion(node) {
   if (!node) throw new Error('No node provided.')
   if (typeof node != 'string') throw new Error('Node must be a string.')
 
   if (!Nodes[node]) throw new Error('Node does not exist.')
 
-  return await utils.makeNodeRequest(Nodes, node, '/version', { method: 'GET' })
+  return utils.makeNodeRequest(Nodes, node, '/version', { method: 'GET' })
 }
 
 /**
@@ -460,13 +450,13 @@ async function getVersion(node) {
  * @throws {Error} If no node is provided or if node is not a string.
  * @return {Promise} A Promise that resolves to the retrieved router planner status data.
  */
-async function getRouterPlannerStatus(node) {
+function getRouterPlannerStatus(node) {
   if (!node) throw new Error('No node provided.')
   if (typeof node != 'string') throw new Error('Node must be a string.')
 
   if (!Nodes[node]) throw new Error('Node does not exist.')
 
-  return await utils.makeNodeRequest(Nodes, node, '/v4/routerplanner/status', { method: 'GET' })
+  return utils.makeNodeRequest(Nodes, node, '/v4/routerplanner/status', { method: 'GET' })
 }
 
 /**
@@ -477,7 +467,7 @@ async function getRouterPlannerStatus(node) {
  * @throws {Error} If no node is provided or if node is not a string.
  * @returns {Promise} A Promise that resolves when the request is complete.
  */
-async function unmarkFailedAddress(node, address) {
+function unmarkFailedAddress(node, address) {
   if (!node) throw new Error('No node provided.')
   if (typeof node != 'string') throw new Error('Node must be a string.')
 
@@ -486,7 +476,7 @@ async function unmarkFailedAddress(node, address) {
   if (!address) throw new Error('No address provided.')
   if (typeof address != 'string') throw new Error('Address must be a string.')
 
-  return await utils.makeNodeRequest(Nodes, node, `/v4/routerplanner/free/address?address=${encodeURIComponent(address)}`, {
+  return utils.makeNodeRequest(Nodes, node, `/v4/routerplanner/free/address?address=${encodeURIComponent(address)}`, {
     method: 'GET',
     body: { address }
   })
@@ -499,13 +489,13 @@ async function unmarkFailedAddress(node, address) {
  * @throws {Error} If no node is provided or if node is not a string.
  * @returns {Promise} A Promise that resolves when the request is complete.
  */
-async function unmarkAllFailedAddresses(node) {
+function unmarkAllFailedAddresses(node) {
   if (!node) throw new Error('No node provided.')
   if (typeof node != 'string') throw new Error('Node must be a string.')
 
   if (!Nodes[node]) throw new Error('Node does not exist.')
 
-  return await utils.makeNodeRequest(Nodes, node, '/v4/routerplanner/free/all', { method: 'GET' })
+  return utils.makeNodeRequest(Nodes, node, '/v4/routerplanner/free/all', { method: 'GET' })
 }
 
 /**

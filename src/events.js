@@ -7,12 +7,8 @@ import trackException from './events/track/trackException.js'
 import trackStuck from './events/track/trackStuck.js'
 import websocketClosed from './events/track/websocketClosed.js'
 
-import index from '../index.js'
-
-function open(Event, node, Nodes) {
+function open(Event, node) {
   Event.emit('debug', `[FastLink] Connected to ${node}`)
-
-  return Nodes
 }
 
 function message(Event, data, node, config, Nodes, Players) {
@@ -77,7 +73,7 @@ function message(Event, data, node, config, Nodes, Players) {
   return { Nodes, Players }
 }
 
-function close(Event, ws, node, config, Nodes, Players) {
+async function close(Event, ws, node, config, Nodes, Players) {
   Event.emit('debug', `[FastLink] Disconnected from ${node.hostname}`)
 
   ws.removeAllListeners()
@@ -89,17 +85,17 @@ function close(Event, ws, node, config, Nodes, Players) {
       delete Players[key]
   })
 
+  const index = await import('../index.js')
+
   setTimeout(() => {
-    index.node.connectNodes([ node ], config)
+    index.default.node.connectNodes([ node ], config)
   }, 5000)
 
   return { Nodes, Players, ws }
 }
 
-function error(Event, err, node, Nodes) {
+function error(Event, err, node) {
   Event.emit('debug', `[FastLink] Error from ${node}: ${err}`)
-
-  return Nodes
 }
 
 export default {
