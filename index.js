@@ -374,8 +374,8 @@ class Player {
     })
   }
 
-  async makeRequest(path, options) {
-    return await utils.makeNodeRequest(Nodes, this.node, `/v4${path}`, options)
+  makeRequest(path, options) {
+    return utils.makeNodeRequest(Nodes, this.node, `/v4${path}`, options)
   }
 }
 

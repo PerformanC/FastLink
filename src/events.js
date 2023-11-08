@@ -18,7 +18,7 @@ function message(Event, data, node, config, Nodes, Players) {
 
   switch (payload.op) {
     case 'ready': {
-      Nodes = ready(Event, payload, node, Nodes, Players)
+      Nodes = ready(Event, payload, node, Nodes)
 
       break
     }
@@ -30,7 +30,7 @@ function message(Event, data, node, config, Nodes, Players) {
     }
 
     case 'stats': {
-      Nodes = stats(Event, payload, node, Nodes, Players)
+      Nodes = stats(Event, payload, node, Nodes)
 
       break
     }
