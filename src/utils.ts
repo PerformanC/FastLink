@@ -1,24 +1,27 @@
-import http from 'http'
+import http, { IncomingMessage } from 'http'
 import https from 'https'
 import zlib from 'zlib'
 
-async function makeNodeRequest(Nodes, node, endpoint, options) {
+import { InternalNodeOptions } from '../index.d'
+import { RequestOptions } from './utils.d'
+
+async function makeNodeRequest(Nodes: InternalNodeOptions, node: string, endpoint: string, options: RequestOptions): Promise<any> {
   return new Promise(async (resolve, reject) => {
     let data = ''
 
     const agent = Nodes[node].secure ? https : http
-    const req = agent.request(`http${Nodes[node].secure ? 's' : ''}://${Nodes[node].hostname}${endpoint}`, {
+    const req: http.ClientRequest = agent.request(`http${Nodes[node].secure ? 's' : ''}://${Nodes[node].hostname}${endpoint}`, {
       method: options.method,
       headers: {
         'Accept-Encoding': 'br, gzip, deflate',
-        'User-Agent': 'FastLink',
+        'User-Agent': 'FastLink.ts',
         'Content-Type': 'application/json',
         'Authorization': Nodes[node].password,
       },
       port: Nodes[node].port || (Nodes[node].secure ? 443 : 80),
-    }, (res) => {
+    }, (res: IncomingMessage) => {
       const headers = res.headers
-      let compression;
+      let connection: zlib.Inflate | zlib.BrotliDecompress | zlib.Gunzip | IncomingMessage | null = null
 
       if (options.retrieveHeaders) {
         req.destroy()
@@ -28,27 +31,28 @@ async function makeNodeRequest(Nodes, node, endpoint, options) {
 
       switch (headers['content-encoding']) {
         case 'deflate': {
-          compression = zlib.createInflate()
+          connection = zlib.createInflate()
           break
         }
         case 'br': {
-          compression = zlib.createBrotliDecompress()
+          connection = zlib.createBrotliDecompress()
           break
         }
         case 'gzip': {
-          compression = zlib.createGunzip()
+          connection = zlib.createGunzip()
           break
         }
       }
 
-      if (compression) {
-        res.pipe(compression)
-        res = compression
+      if (connection) {
+        res.pipe(connection as zlib.Inflate | zlib.BrotliDecompress | zlib.Gunzip)
+      } else {
+        connection = res
       }
 
-      res.on('data', (chunk) => (data += chunk))
+      connection.on('data', (chunk) => (data += chunk))
 
-      res.on('end', () => {
+      connection.on('end', () => {
         if (headers['content-type'] == 'application/json')
           resolve(JSON.parse(data))
         else
@@ -56,7 +60,7 @@ async function makeNodeRequest(Nodes, node, endpoint, options) {
       })
     })
 
-    req.on('error', (error) => {
+    req.on('error', (error: Error) => {
       console.log(`[FastLink] Failed sending HTTP request: ${error}`)
 
       reject()

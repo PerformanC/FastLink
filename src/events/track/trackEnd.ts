@@ -1,11 +1,19 @@
 import utils from '../../utils.js'
 
-function trackEnd(Event, payload, node, config, Nodes, Players) {
+import { ConfigOptions, InternalNodeOptions, InternalPlayerOptions } from '../../../index.d'
+import { PartialTrackData } from './track.d'
+import Event from 'events'
+
+function trackEnd(Event: Event, payload: any, node: string, config: ConfigOptions, Nodes: InternalNodeOptions, Players: InternalPlayerOptions): InternalPlayerOptions {
   Event.emit('debug', `[FastLink] ${node} has ended a track`)
 
   const player = Players[payload.guildId]
 
-  if (!player) return console.log(`[FastLink] Received TrackEndEvent from ${node} but no player was found`)
+  if (!player) {
+    console.log(`[FastLink] Received TrackEndEvent from ${node} but no player was found`)
+
+    return Players
+  }
 
   if (config.queue && payload.reason != 'replaced') {
     player.queue.shift()
@@ -25,7 +33,7 @@ function trackEnd(Event, payload, node, config, Nodes, Players) {
   player.playing = false
   player.volume = null
 
-  Event.emit('trackEnd', { node: Nodes[node], guildId: payload.guildId, player, track: payload.track  })
+  Event.emit('trackEnd', { node: Nodes[node], guildId: payload.guildId as string, player, track: payload.track as PartialTrackData })
 
   return Players
 }

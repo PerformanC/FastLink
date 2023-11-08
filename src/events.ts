@@ -7,18 +7,22 @@ import trackException from './events/track/trackException.js'
 import trackStuck from './events/track/trackStuck.js'
 import websocketClosed from './events/track/websocketClosed.js'
 
-function open(Event, node) {
+import { ConfigOptions, InternalNodeOptions, InternalPlayerOptions, NodeOptions } from '../index.d.js'
+import PWSL from './ws'
+import Event from 'events'
+
+function open(Event: Event, node: string) {
   Event.emit('debug', `[FastLink] Connected to ${node}`)
 }
 
-function message(Event, data, node, config, Nodes, Players) {
-  const payload = JSON.parse(data)
+function message(Event: Event, data: string, node: string, config: ConfigOptions, Nodes: InternalNodeOptions, Players: InternalPlayerOptions): { Nodes: InternalNodeOptions, Players: InternalPlayerOptions } {
+  const payload: any = JSON.parse(data)
 
   Event.emit('raw', payload)
 
   switch (payload.op) {
     case 'ready': {
-      Nodes = ready(Event, payload, node, Nodes, Players)
+      Nodes = ready(Event, payload, node, Nodes)
 
       break
     }
@@ -30,7 +34,7 @@ function message(Event, data, node, config, Nodes, Players) {
     }
 
     case 'stats': {
-      Nodes = stats(Event, payload, node, Nodes, Players)
+      Nodes = stats(Event, payload, node, Nodes)
 
       break
     }
@@ -73,12 +77,12 @@ function message(Event, data, node, config, Nodes, Players) {
   return { Nodes, Players }
 }
 
-async function close(Event, ws, node, config, Nodes, Players) {
+async function close(Event: Event, ws: PWSL, node: NodeOptions, config: ConfigOptions, Nodes: InternalNodeOptions, Players: InternalPlayerOptions): Promise<{ Nodes: InternalNodeOptions, Players: InternalPlayerOptions, ws: PWSL }> {
   Event.emit('debug', `[FastLink] Disconnected from ${node.hostname}`)
 
   ws.removeAllListeners()
 
-  Nodes[node.hostname] = null
+  delete Nodes[node.hostname]
 
   Object.keys(Players).forEach((key) => {
     if (Players[key].node == node.hostname)
@@ -94,7 +98,7 @@ async function close(Event, ws, node, config, Nodes, Players) {
   return { Nodes, Players, ws }
 }
 
-function error(Event, err, node) {
+function error(Event: Event, err: Error, node: string) {
   Event.emit('debug', `[FastLink] Error from ${node}: ${err}`)
 }
 

@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "outDir": "dist",
+    "esModuleInterop": true,
+    "types": ["node"],
+    "baseUrl": ".",
+    "moduleResolution": "node",
+    "typeRoots": ["node_modules/@types/"],
+    "paths": {
+      "*": [
+        "node_modules/*"
+      ]
+    }
+  },
+  "include": ["*.ts", "src/**/*.ts"]
+}

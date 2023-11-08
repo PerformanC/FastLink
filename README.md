@@ -4,33 +4,40 @@
 
 ## About
 
-FastLink is a NodeJs Lavalink client, with a low-level representation of the Lavalink API, with a simple and easy-to-use API.
+FastLink is a NodeJS Lavalink client, with a low-level representation of the Lavalink API, with a simple and easy-to-use API.
 
-Able to be installed in most NodeJs versions, and with low memory usage, FastLink is a good choice for your Discord bot.
+Able to be installed in most NodeJS versions, and with low memory usage, FastLink is a good choice for your Discord bot.
+
+**OBS**: This is the TypeScript branch of FastLink, it diverges internally, but API usage is the same.
 
 ## Minimum requirements
 
-- NodeJs 13 or higher (ES6 requirements)
+- NodeJS 13 or higher (ES6 requirements)
 - Lavalink v4.0.0 or higher
+
+## Recommended requirements
+
+- NodeJS 18 or higher
+- NodeLink
 
 ## Installation
 
 You can install FastLink through npm:
 
 ```bash
-$ npm i @performanc/fastlink
+$ npm i PerformanC/FastLink#ts
 ```
 
 And that's it, you'll be able to use FastLink in your project.
 
 ## Example
 
-```js
-import Lavalink from 'fastlink'
+```ts
+import FastLink from '@performanc/fastlink'
 import Discord from 'discord.js'
 
 const client = new Discord.Client({
-  Partials: [
+  partials: [
     Discord.Partials.Channel
   ],
   intents: [
@@ -41,7 +48,7 @@ const client = new Discord.Client({
   ]
 })
 
-const events = Lavalink.node.connectNodes([{
+const events = FastLink.node.connectNodes([{
   hostname: '127.0.0.1',
   secure: false,
   password: 'youshallnotpass',
@@ -56,26 +63,37 @@ const prefix = '!'
 
 events.on('debug', console.log)
 
-client.on('messageCreate', async (message) => {
+client.on('messageCreate', async (message: Discord.Message): Promise<void> => {
   if (message.content.startsWith(prefix + 'decodetrack')) {
-    const player = new Lavalink.player.Player(message.guild.id)
+    const player = new FastLink.player.Player(message.guild.id)
 
-    if (player.playerCreated() == false) 
-      return message.channel.send('No player found.')
+    if (player.playerCreated() == false) {
+      message.channel.send('No player found.')
+
+      return;
+    }
 
     let track = await player.decodeTrack(message.content.replace(prefix + 'decodetrack ', ''))
 
-    return message.channel.send(JSON.stringify(track, null, 2))
+    message.channel.send(JSON.stringify(track, null, 2))
+
+    return;
   }
 
   if (message.content.startsWith(prefix + 'play')) {
-    if (!message.member.voice.channel)
-      return message.channel.send('You must be in a voice channel.')
+    if (!message.member.voice.channel) {
+      message.channel.send('You must be in a voice channel.')
 
-    if (!Lavalink.node.anyNodeAvailable())
-      return message.channel.send('There aren\'t nodes connected.')
+      return;
+    }
 
-    const player = new Lavalink.player.Player(message.guild.id)
+    if (!FastLink.node.anyNodeAvailable()) {
+      message.channel.send('There aren\'t nodes connected.')
+
+      return;
+    }
+
+    const player = new FastLink.player.Player(message.guild.id)
 
     if (player.playerCreated() == false) player.createPlayer()
 
@@ -86,84 +104,128 @@ client.on('messageCreate', async (message) => {
     const music = message.content.replace(prefix + 'play ', '')
     const track = await player.loadTrack((music.startsWith('https://') ? '' : 'ytsearch:') + music)
 
-    if (track.loadType == 'error') 
-      return message.channel.send('Something went wrong. ' + track.data.message)
+    if (track.loadType == 'error') {
+      message.channel.send('Something went wrong. ' + track.data.message)
 
-    if (track.loadType == 'empty')
-      return message.channel.send('No matches found.')
+      return;
+    }
+
+    if (track.loadType == 'empty') {
+      message.channel.send('No matches found.')
+
+      return;
+    }
 
     if (track.loadType == 'playlist') {
       player.update({ encodedTracks: track.data.tracks.map((track) => track.encoded) })
 
-      return message.channel.send(`Added ${track.data.tracks.length} songs to the queue, and playing ${track.data.tracks[0].info.title}.`)
+      message.channel.send(`Added ${track.data.tracks.length} songs to the queue, and playing ${track.data.tracks[0].info.title}.`)
+
+      return;
     }
 
     if (track.loadType == 'track' || track.loadType == 'short') {
       player.update({ encodedTrack: track.data.encoded, })
 
-      return message.channel.send(`Playing ${track.data.info.title} from ${track.data.info.sourceName} from url search.`)
+      message.channel.send(`Playing ${track.data.info.title} from ${track.data.info.sourceName} from url search.`)
+
+      return;
     }
 
     if (track.loadType == 'search') {
       player.update({ encodedTrack: track.data[0].encoded })
 
-      return message.channel.send(`Playing ${track.data[0].info.title} from ${track.data[0].info.sourceName} from search.`)
-    }
+      message.channel.send(`Playing ${track.data[0].info.title} from ${track.data[0].info.sourceName} from search.`)
 
+      return;
+    }
   }
 
   if (message.content.startsWith(prefix + 'volume')) {
-    const player = new Lavalink.player.Player(message.guild.id)
+    const player = new FastLink.player.Player(message.guild.id)
 
-    if (player.playerCreated() == false) 
-      return message.channel.send('No player found.')
+    if (player.playerCreated() == false) {
+      message.channel.send('No player found.')
+
+      return;
+    }
 
     player.update({
       volume: parseInt(message.content.replace(prefix + 'volume ', ''))
     })
+
+    message.channel.send(`Volume set to ${message.content.replace(prefix + 'volume ', '')}`)
+
+    return;
   }
 
   if (message.content.startsWith(prefix + 'pause')) {
-    const player = new Lavalink.player.Player(message.guild.id)
+    const player = new FastLink.player.Player(message.guild.id)
 
-    if (player.playerCreated() == false) 
-      return message.channel.send('No player found.')
+    if (player.playerCreated() == false) {
+      message.channel.send('No player found.')
+
+      return;
+    }
 
     player.update({ paused: true })
+
+    message.channel.send('Paused.')
+
+    return;
   }
 
   if (message.content.startsWith(prefix + 'resume')) {
-    const player = new Lavalink.player.Player(message.guild.id)
+    const player = new FastLink.player.Player(message.guild.id)
 
-    if (player.playerCreated() == false) 
-      return message.channel.send('No player found.')
+    if (player.playerCreated() == false) {
+      message.channel.send('No player found.')
+
+      return;
+    }
 
     player.update({ paused: false })
+
+    message.channel.send('Resumed.')
+
+    return;
   }
 
   if (message.content.startsWith(prefix + 'skip')) {
-    const player = new Lavalink.player.Player(message.guild.id)
+    const player = new FastLink.player.Player(message.guild.id)
 
-    if (player.playerCreated() == false) 
-      return message.channel.send('No player found.')
+    if (player.playerCreated() == false) {
+      message.channel.send('No player found.')
+
+      return;
+    }
 
     const skip = player.skipTrack()
 
-    if (skip.skipped) return message.channel.send('Skipped the current track.')
-    else return message.channel.send('Could not skip the current track.')
+    if (skip) message.channel.send('Skipped the current track.')
+    else message.channel.send('Could not skip the current track.')
+
+    return;
   }
 
   if (message.content.startsWith(prefix + 'stop')) {
-    const player = new Lavalink.player.Player(message.guild.id)
+    const player = new FastLink.player.Player(message.guild.id)
 
-    if (player.playerCreated() == false) 
-      return message.channel.send('No player found.')
+    if (player.playerCreated() == false) {
+      message.channel.send('No player found.')
+
+      return;
+    }
 
     player.update({ encodedTrack: null })
+
+    message.channel.send('Stopped the player.')
+
+    return;
   }
 })
 
-client.on('raw', (data) => Lavalink.other.handleRaw(data))
+client.on('raw', (data) => FastLink.other.handleRaw(data))
 
 client.login('Your bot token here')
 ```

@@ -4,30 +4,36 @@ import https from 'node:https'
 import http from 'node:http'
 import crypto from 'node:crypto'
 import EventEmitter from 'node:events'
-import { URL } from 'node:url'
+import { URL, UrlObject } from 'node:url'
 
-function parsePacket(data) {
-  let payloadStartIndex = 2
+import { WebSocketOptions, FrameOptions } from './ws.d'
 
-  const opcode = data[0] & 0b00001111
+function parsePacket(data: Buffer): Buffer {
+  let payloadStartIndex: number = 2
+
+  const opcode: number = data[0] & 0b00001111
 
   if (opcode == 0x0) payloadStartIndex += 2
 
-  let payloadLength = data[1] & 0b01111111
+  let payloadLength: number = data[1] & 0b01111111
 
   if (payloadLength == 126) {
     payloadStartIndex += 2
     payloadLength = data.readUInt16BE(2)
   } else if (payloadLength == 127) {
     payloadStartIndex += 8
-    payloadLength = data.readBigUInt64BE(2)
+    payloadLength = Number(data.readBigUInt64BE(2))
   }
 
   return data.subarray(payloadStartIndex)
 }
 
 class WebSocket extends EventEmitter {
-  constructor(url, options) {
+  private url: string
+  private options: WebSocketOptions
+  private socket: net.Socket | null
+
+  constructor(url: string, options: WebSocketOptions) {
     super()
 
     this.url = url
@@ -39,27 +45,28 @@ class WebSocket extends EventEmitter {
     return this
   }
 
-  connect() {
-    const parsedUrl = new URL(this.url)
-    const isSecure = parsedUrl.protocol == 'wss:'
-    const agent = isSecure ? https : http
+  connect(): void {
+    const parsedUrl: UrlObject = new URL(this.url)
+    const isSecure: Boolean = parsedUrl.protocol == 'wss:'
+    const agent: typeof https | typeof http = isSecure ? https : http
     const key = crypto.randomBytes(16).toString('base64')
 
     const request = agent.request((isSecure ? 'https://' : 'http://') + parsedUrl.hostname + parsedUrl.pathname, {
       port: parsedUrl.port || (isSecure ? 443 : 80),
-      timeout: this.options.timeout || 5000,
-      createConnection: (options) => {
+      timeout: 5000,
+      createConnection: (options: http.ClientRequestArgs) => {
         if (isSecure) {
           options.path = undefined
-
-          if (!options.servername && options.servername != '')
-            options.servername = net.isIP(options.host) ? '' : options.host
-
-          return tls.connect(options)
+    
+          if (!(options as tls.ConnectionOptions).servername && (options as tls.ConnectionOptions).servername !== '') {
+            (options as tls.ConnectionOptions).servername = net.isIP(options.host) ? '' : options.host
+          }
+    
+          return tls.connect(options as tls.ConnectionOptions)
         } else {
           options.path = options.socketPath
-
-          return net.connect(options)
+    
+          return net.connect(options as net.NetConnectOpts)
         }
       },
       headers: {
@@ -72,13 +79,13 @@ class WebSocket extends EventEmitter {
       method: 'GET'
     })
 
-    request.on('error', (err) => {
+    request.on('error', (err: Error) => {
       this.emit('error', err)
       this.emit('close')
     })
 
-    request.on('upgrade', (res, socket, _head) => {  
-      if (res.headers.upgrade.toLowerCase() != 'websocket') {
+    request.on('upgrade', (res: http.IncomingMessage, socket: net.Socket, _head: any) => {
+      if (res.headers.upgrade && res.headers.upgrade.toLowerCase() != 'websocket') {
         socket.destroy()
 
         return;
@@ -94,7 +101,7 @@ class WebSocket extends EventEmitter {
         return;
       }
 
-      socket.on('data', (data) => this.emit('message', parsePacket(data).toString()))
+      socket.on('data', (data: Buffer) => this.emit('message', parsePacket(data).toString()))
   
       socket.on('close', () => this.emit('close'))
 
@@ -104,7 +111,9 @@ class WebSocket extends EventEmitter {
     request.end()
   }
 
-  sendFrame(data, options) {
+  sendFrame(data: Uint8Array, options: FrameOptions): boolean {
+    if (!this.socket) return false
+
     let startIndex = 2
 
     if (options.len >= 65536) {
@@ -135,7 +144,7 @@ class WebSocket extends EventEmitter {
     return true
   }
 
-  close(code, reason) {
+  close(code?: number, reason?: string) {
     const data = Buffer.allocUnsafe(2 + Buffer.byteLength(reason || 'normal close'))
     data.writeUInt16BE(code || 1000)
     data.write(reason || 'normal close', 2)
