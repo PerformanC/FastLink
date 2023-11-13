@@ -13,6 +13,11 @@ import {
   LoadTrackData,
   LoadShortData,
   LoadPlaylistData,
+  LoadAlbumData,
+  LoadArtistData,
+  LoadShowData,
+  LoadPodcastData,
+  LoadStationData,
   LoadSearchData,
   LoadEmptyData,
   LoadErrorData,
@@ -196,7 +201,7 @@ class Player {
    * @return {TrackData} The loaded track data.
    * @throws {Error} If the search is not provided or is of invalid type.
    */
-  loadTrack(search: string): Promise<LoadTrackData | LoadShortData | LoadPlaylistData | LoadSearchData | LoadEmptyData | LoadErrorData> {  
+  loadTrack(search: string): Promise<LoadTrackData | LoadShortData | LoadPlaylistData | LoadAlbumData | LoadArtistData | LoadShowData | LoadPodcastData | LoadStationData | LoadSearchData | LoadEmptyData | LoadErrorData> {  
     return this.makeRequest(`/loadtracks?identifier=${encodeURIComponent(search)}`, {
       method: 'GET'
     })

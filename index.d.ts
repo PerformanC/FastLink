@@ -70,7 +70,62 @@ export type LoadShortData = {
 export type LoadPlaylistData = {
   loadType: 'playlist',
   data: {
-    playlistInfo: {
+    info: {
+      name: string,
+      selectedTrack: number
+    },
+    tracks: Array<TrackData>
+  }
+}
+
+export type LoadAlbumData = {
+  loadType: 'album',
+  data: {
+    info: {
+      name: string,
+      selectedTrack: number
+    },
+    tracks: Array<TrackData>
+  }
+}
+
+export type LoadArtistData = {
+  loadType: 'artist',
+  data: {
+    info: {
+      name: string,
+      artworkUrl: string
+    },
+    tracks: Array<TrackData>
+  }
+}
+
+export type LoadShowData = {
+  loadType: 'show',
+  data: {
+    info: {
+      name: string,
+      selectedTrack: number
+    },
+    tracks: Array<TrackData>
+  }
+}
+
+export type LoadPodcastData = {
+  loadType: 'podcast',
+  data: {
+    info: {
+      name: string,
+      selectedTrack: number
+    },
+    tracks: Array<TrackData>
+  }
+}
+
+export type LoadStationData = {
+  loadType: 'station',
+  data: {
+    info: {
       name: string,
       selectedTrack: number
     },

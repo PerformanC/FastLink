@@ -525,6 +525,16 @@ function handleRaw(data) {
 
       break
     }
+    case 'GUILD_CREATE': {
+      if (!data.d.voice_states) return;
+
+      data.d.voice_states.forEach((state) => {
+        if (state.user_id == Config.botId)
+          sessionIds[data.d.id] = state.session_id
+      })
+
+      break
+    }
 
     case 'VOICE_STATE_UPDATE': {
       if (data.d.member.user.id == Config.botId)
