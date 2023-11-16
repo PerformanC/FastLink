@@ -17,8 +17,6 @@ function trackEnd(Event, payload, node, config, Nodes, Players) {
         },
         method: 'PATCH'
       })
-
-      return Players
     }
   } else player.track = null
 

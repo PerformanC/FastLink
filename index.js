@@ -323,7 +323,7 @@ class Player {
    * Skips the currently playing track.
    *
    * @return {Array<TrackData> | null} The queue of tracks.
-   * @throws {Error} If the queue is disabled or there are no tracks in the queue.
+   * @throws {Error} If the queue is disabled
    */
   skipTrack() {  
     if (!Config.queue) throw new Error('Queue is disabled.')
