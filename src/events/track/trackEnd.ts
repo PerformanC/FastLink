@@ -25,8 +25,6 @@ function trackEnd(Event: Event, payload: any, node: string, config: ConfigOption
         },
         method: 'PATCH'
       })
-
-      return Players
     }
   } else player.track = null
 

@@ -6,7 +6,7 @@ import { InternalNodeOptions } from '../index.d'
 import { RequestOptions } from './utils.d'
 
 async function makeNodeRequest(Nodes: InternalNodeOptions, node: string, endpoint: string, options: RequestOptions): Promise<any> {
-  return new Promise(async (resolve, reject) => {
+  return new Promise(async (resolve) => {
     let data = ''
 
     const agent = Nodes[node].secure ? https : http
@@ -62,8 +62,6 @@ async function makeNodeRequest(Nodes: InternalNodeOptions, node: string, endpoin
 
     req.on('error', (error: Error) => {
       console.log(`[FastLink] Failed sending HTTP request: ${error}`)
-
-      reject()
     })
 
     if (options.body) {

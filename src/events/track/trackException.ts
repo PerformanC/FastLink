@@ -18,22 +18,18 @@ function trackException(Event: Event, payload: any, node: string, config: Config
   if (config.queue) {
     player.queue.shift()
 
-    if (player.queue.length > 0 && false) {
+    if (player.queue.length > 0) {
       utils.makeNodeRequest(Nodes, node, `/v4/sessions/${Nodes[node].sessionId}/players/${payload.guildId}`, {
         body: {
           encodedTrack: player.queue[0]
         },
         method: 'PATCH'
       })
-
-      return Players
     }
   } else player.track = null
 
   player.playing = false
   player.volume = null
-
-  console.log(payload)
 
   Event.emit('trackException', { node: Nodes[node], guildId: payload.guildId as string, player, track: payload.track as PartialTrackData })
 
