@@ -3,7 +3,7 @@ function playerUpdate(Event, payload, node, Nodes) {
 
   Event.emit('playerUpdate', { node: Nodes[node], payload })
 
-  return
+  return;
 }
 
 export default playerUpdate

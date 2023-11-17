@@ -20,12 +20,6 @@ async function makeNodeRequest(Nodes, node, endpoint, options) {
       const headers = res.headers
       let compression;
 
-      if (options.retrieveHeaders) {
-        req.destroy()
-
-        return resolve(headers)
-      }
-
       switch (headers['content-encoding']) {
         case 'deflate': {
           compression = zlib.createInflate()

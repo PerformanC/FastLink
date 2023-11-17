@@ -12,7 +12,7 @@ import Pws from './src/ws.js'
 let Config = {}
 let Nodes = {}
 let Players = {}
-const sessionIds = {}
+const vcsData = {}
 
 const Event = new event()
 
@@ -507,7 +507,7 @@ function unmarkAllFailedAddresses(node) {
 function handleRaw(data) {
   switch (data.t) {
     case 'VOICE_SERVER_UPDATE': {
-      if (!sessionIds[data.d.guild_id]) return;
+      if (!vcsData[data.d.guild_id]) return;
 
       const player = new Player(data.d.guild_id)
 
@@ -517,20 +517,52 @@ function handleRaw(data) {
         voice: {
           token: data.d.token,
           endpoint: data.d.endpoint,
-          sessionId: sessionIds[data.d.guild_id]
+          sessionId: vcsData[data.d.guild_id].sessionId
         }
       })
 
-      delete sessionIds[data.d.guild_id]
+      vcsData[data.d.guild_id].server = {
+        token: data.d.token,
+        endpoint: data.d.endpoint
+      }
 
       break
     }
 
     case 'VOICE_STATE_UPDATE': {
-      if (data.d.member.user.id == Config.botId)
-        sessionIds[data.d.guild_id] = data.d.session_id
+      if (data.d.member.user.id != Config.botId) return;
+
+      vcsData[data.d.guild_id] = {
+        ...vcsData[data.d.guild_id],
+        sessionId: data.d.session_id
+      }
+
+      if (vcsData[data.d.guild_id].server) {
+        const player = new Player(data.d.guild_id)
+
+        if (!player.playerCreated()) return;
+
+        player.update({
+          voice: {
+            token: vcsData[data.d.guild_id].server.token,
+            endpoint: vcsData[data.d.guild_id].server.endpoint,
+            sessionId: vcsData[data.d.guild_id].sessionId
+          }
+        })
+      }
 
       break
+    }
+
+    case 'GUILD_CREATE': {
+      data.d.voice_states.forEach((state) => {
+        if (state.user_id != Config.botId) return;
+
+        vcsData[data.d.id] = {
+          ...vcsData[data.d.id],
+          sessionId: state.session_id
+        }
+      })
     }
   }
 }

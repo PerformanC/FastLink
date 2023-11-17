@@ -31,9 +31,9 @@ function trackEnds(Event, payload, node, config, Nodes, Players) {
     guildId: payload.guildId,
     player,
     track: payload.track,
-    ...(payload.exception ? { exception: payload.exception } : {}),
-    ...(payload.reason ? { reason: payload.reason } : {}),
-    ...(payload.thresholdMs ? { thresholdMs: payload.thresholdMs } : {})
+    reason: payload.reason,
+    exception: payload.exception,
+    thresholdMs: payload.thresholdMs
   })
 
   return Players
