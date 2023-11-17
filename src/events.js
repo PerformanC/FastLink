@@ -2,9 +2,7 @@ import ready from './events/ready.js'
 import playerUpdate from './events/playerUpdate.js'
 import stats from './events/stats.js'
 import trackStart from './events/track/trackStart.js'
-import trackEnd from './events/track/trackEnd.js'
-import trackException from './events/track/trackException.js'
-import trackStuck from './events/track/trackStuck.js'
+import trackEnds from './events/track/trackEnds.js'
 import websocketClosed from './events/track/websocketClosed.js'
 
 function open(Event, node) {
@@ -43,20 +41,10 @@ function message(Event, data, node, config, Nodes, Players) {
           break
         }
 
-        case 'TrackEndEvent': {
-          Players = trackEnd(Event, payload, node, config, Nodes, Players)
-
-          break
-        }
-
-        case 'TrackExceptionEvent': {
-          Players = trackException(Event, payload, node, config, Nodes, Players)
-
-          break
-        }
-
+        case 'TrackEndEvent':
+        case 'TrackExceptionEvent':
         case 'TrackStuckEvent': {
-          Players = trackStuck(Event, payload, node, config, Nodes, Players)
+          Players = trackEnds(Event, payload, node, config, Nodes, Players)
 
           break
         }

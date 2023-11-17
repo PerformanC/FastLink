@@ -58,8 +58,6 @@ async function makeNodeRequest(Nodes, node, endpoint, options) {
 
     req.on('error', (error) => {
       console.log(`[FastLink] Failed sending HTTP request: ${error}`)
-
-      reject()
     })
 
     if (options.body) {
