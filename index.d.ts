@@ -1,8 +1,15 @@
 import { TrackData } from './src/events/track/track.d'
 
-export type StatsOptions = {
-  systemLoad: number,
-  cores: number,
+export type ConfigData = {
+  botId?: string,
+  shards?: number,
+  queue?: boolean
+}
+
+export type ConfigOptions = {
+  botId: string,
+  shards: number,
+  queue: boolean
 }
 
 export type NodeOptions = {
@@ -12,31 +19,25 @@ export type NodeOptions = {
   port: number
 }
 
-export type ConfigOptions = {
-  botId?: string,
-  shards?: number,
-  queue?: boolean
-}
-
-export type InternalNodeOptions = {
-  [key: string]: {
-    hostname?: string,
-    password?: string,
-    secure?: boolean,
-    port?: number,
-    connected?: boolean,
-    sessionId?: string | null,
-    stats?: {
-      systemLoad: number,
-      cores: number
-    }
-    players?: {
-      [key: string]: PlayerOptions
-    }
+export type NodeData = {
+  hostname?: string,
+  password?: string,
+  secure?: boolean,
+  port?: number,
+  connected?: boolean,
+  sessionId?: string | null,
+  stats?: {
+    systemLoad: number,
+    cores: number
   }
+  players?: InternalPlayerData
 }
 
-export type PlayerOptions = {
+export type InternalNodeData = {
+  [key: string]: NodeData
+}
+
+export type PlayerData = {
   connected: boolean,
   playing: boolean,
   paused: boolean,
@@ -46,11 +47,19 @@ export type PlayerOptions = {
   track?: string
 }
 
-export type InternalPlayerOptions = {
-  [key: string]: PlayerOptions | null
+export type InternalPlayerData = {
+  [key: string]: PlayerData | null
 }
 
-export type InternalSessionIdOptions = [ string ] | {}
+export type InternalVoiceData = [{
+  [key: string]: {
+    server: {
+      sessionId: string,
+      endpoint: string,
+    },
+    token: string
+  }
+}] | {}
 
 export type ConnectOptions = {
   deaf: boolean,
@@ -242,7 +251,7 @@ export type PlayersData = {
   }
 }
 
-export type NodeInfo = {
+export type NodeInfoData = {
   version: {
     semver: string,
     major: number,

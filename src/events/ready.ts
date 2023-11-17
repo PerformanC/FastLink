@@ -1,8 +1,8 @@
-import { InternalNodeOptions } from '../../index.d'
+import { InternalNodeData } from '../../index.d'
 import { ReadyData } from './ready.d'
 import Event from 'node:events'
 
-function ready(Event: Event, payload: any, node: string, Nodes: InternalNodeOptions): InternalNodeOptions {
+function ready(Event: Event, payload: any, node: string, Nodes: InternalNodeData): InternalNodeData {
   Nodes[node].sessionId = payload.sessionId
   Nodes[node].connected = true
 

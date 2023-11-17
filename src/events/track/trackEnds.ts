@@ -1,16 +1,18 @@
 import utils from '../../utils.js'
 
-import { ConfigOptions, InternalNodeOptions, InternalPlayerOptions } from '../../../index.d'
-import { PartialTrackData } from './track.js'
+import { ConfigData, InternalNodeData, InternalPlayerData } from '../../../index.d'
+import { TrackEndData, TrackExceptionData, TrackStuckData } from './trackEnds.d'
 import Event from 'node:events'
 
-function trackEnd(Event: Event, payload: any, node: string, config: ConfigOptions, Nodes: InternalNodeOptions, Players: InternalPlayerOptions): InternalPlayerOptions {
-  Event.emit('debug', `[FastLink] ${node} has ended a track`)
+function trackEnd(Event: Event, payload: any, node: string, config: ConfigData, Nodes: InternalNodeData, Players: InternalPlayerData): InternalPlayerData {
+  const name = payload.type == 'TrackEndEvent' ? 'trackEnd' : (payload.type == 'TrackExceptionEvent' ? 'trackException' : 'trackStuck')
+
+  Event.emit('debug', `[FastLink] ${node} has received a ${name}`)
 
   const player = Players[payload.guildId]
 
   if (!player) {
-    console.log(`[FastLink] Received TrackEndEvent from ${node} but no player was found`)
+    console.log(`[FastLink] Received ${name} from ${node} but no player was found`)
 
     return Players
   }
@@ -31,7 +33,15 @@ function trackEnd(Event: Event, payload: any, node: string, config: ConfigOption
   player.playing = false
   player.volume = null
 
-  Event.emit('trackEnd', { node: Nodes[node], guildId: payload.guildId as string, player, track: payload.track as PartialTrackData })
+  Event.emit(name, {
+    node: Nodes[node],
+    guildId: payload.guildId,
+    player,
+    track: payload.track,
+    reason: payload.reason,
+    exception: payload.exception,
+    thresholdMs: payload.thresholdMs
+  } as TrackEndData | TrackExceptionData | TrackStuckData)
 
   return Players
 }

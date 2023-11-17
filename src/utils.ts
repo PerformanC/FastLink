@@ -2,10 +2,10 @@ import http, { IncomingMessage } from 'node:http'
 import https from 'node:https'
 import zlib from 'node:zlib'
 
-import { InternalNodeOptions } from '../index.d'
+import { InternalNodeData } from '../index.d'
 import { RequestOptions } from './utils.d'
 
-async function makeNodeRequest(Nodes: InternalNodeOptions, node: string, endpoint: string, options: RequestOptions): Promise<any> {
+async function makeNodeRequest(Nodes: InternalNodeData, node: string, endpoint: string, options: RequestOptions): Promise<any> {
   return new Promise(async (resolve) => {
     let data = ''
 
@@ -22,12 +22,6 @@ async function makeNodeRequest(Nodes: InternalNodeOptions, node: string, endpoin
     }, (res: IncomingMessage) => {
       const headers = res.headers
       let connection: zlib.Inflate | zlib.BrotliDecompress | zlib.Gunzip | IncomingMessage | null = null
-
-      if (options.retrieveHeaders) {
-        req.destroy()
-
-        return resolve(headers)
-      }
 
       switch (headers['content-encoding']) {
         case 'deflate': {

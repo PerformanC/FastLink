@@ -4,11 +4,12 @@
  */
 
 import {
+  ConfigData,
   ConfigOptions,
-  InternalNodeOptions,
+  InternalNodeData,
   NodeOptions,
-  InternalPlayerOptions,
-  InternalSessionIdOptions,
+  InternalPlayerData,
+  InternalVoiceData,
   ConnectOptions,
   LoadTrackData,
   LoadShortData,
@@ -24,7 +25,7 @@ import {
   UpdatePlayerOptions,
   UpdatePlayerData,
   PlayersData,
-  NodeInfo,
+  NodeInfoData,
   RequestStatsData,
   RouterPlannerStatusData
 } from './index.d'
@@ -37,10 +38,10 @@ import events from './src/events.js'
 import utils from './src/utils.js'
 import PWSL from './src/ws.js'
 
-let Config: ConfigOptions = {}
-let Nodes: InternalNodeOptions = {}
-let Players: InternalPlayerOptions = {}
-const sessionIds: InternalSessionIdOptions = {}
+let Config: ConfigData = {}
+let Nodes: InternalNodeData = {}
+let Players: InternalPlayerData = {}
+const vcsData: InternalVoiceData = {}
 
 const Event = new event()
 
@@ -53,11 +54,7 @@ const Event = new event()
  * @returns {Object} Event object representing the WebSocket event handlers.
  */
 function connectNodes(nodes: Array<NodeOptions>, config: ConfigOptions) {
-  Config = {
-    botId: config.botId,
-    shards: config.shards,
-    queue: config.queue || false
-  }
+  Config = config
 
   nodes.forEach((node) => {
     Nodes[node.hostname] = {
@@ -104,15 +101,15 @@ function connectNodes(nodes: Array<NodeOptions>, config: ConfigOptions) {
  * @returns {boolean} The boolean if any node is connected or not.
  */
 function anyNodeAvailable(): boolean {
-  return Object.values(Nodes).filter((node: InternalNodeOptions) => node?.connected).length == 0 ? false : true
+  return Object.values(Nodes).filter((node: InternalNodeData) => node?.connected).length == 0 ? false : true
 }
 
-function getRecommendedNode(): InternalNodeOptions {
-  const nodes = Object.values(Nodes).filter((node: InternalNodeOptions) => node.connected)
+function getRecommendedNode(): InternalNodeData {
+  const nodes = Object.values(Nodes).filter((node: InternalNodeData) => node.connected)
 
   if (nodes.length == 0) throw new Error('No node connected.')
   
-  return nodes.sort((a, b) => (a.stats.systemLoad / a.stats.cores) * 100 - (b.stats.systemLoad / b.stats.cores) * 100)[0] as InternalNodeOptions
+  return nodes.sort((a, b) => (a.stats.systemLoad / a.stats.cores) * 100 - (b.stats.systemLoad / b.stats.cores) * 100)[0] as InternalNodeData
 }
 
 /**
@@ -375,7 +372,7 @@ function getPlayers(node: string): Promise<PlayersData> {
  * @throws {Error} If no node is provided or if node is not a string.
  * @return {Promise} A Promise that resolves to the retrieved info data.
  */
-function getInfo(node: string): Promise<NodeInfo> {
+function getInfo(node: string): Promise<NodeInfoData> {
   if (!Nodes[node]) throw new Error('Node does not exist.')
 
   return utils.makeNodeRequest(Nodes, node, '/v4/info', { method: 'GET' })
@@ -459,7 +456,7 @@ function unmarkAllFailedAddresses(node: string): Promise<void> {
 function handleRaw(data: any): void {
   switch (data.t) {
     case 'VOICE_SERVER_UPDATE': {
-      if (!sessionIds[data.d.guild_id]) return;
+      if (!vcsData[data.d.guild_id]) return;
 
       const player = new Player(data.d.guild_id)
 
@@ -469,20 +466,52 @@ function handleRaw(data: any): void {
         voice: {
           token: data.d.token,
           endpoint: data.d.endpoint,
-          sessionId: sessionIds[data.d.guild_id]
+          sessionId: vcsData[data.d.guild_id].sessionId
         }
       })
 
-      delete sessionIds[data.d.guild_id]
+      vcsData[data.d.guild_id].server = {
+        token: data.d.token,
+        endpoint: data.d.endpoint
+      }
 
       break
     }
 
     case 'VOICE_STATE_UPDATE': {
-      if (data.d.member.user.id == Config.botId)
-        sessionIds[data.d.guild_id] = data.d.session_id
+      if (data.d.member.user.id != Config.botId) return;
+
+      vcsData[data.d.guild_id] = {
+        ...vcsData[data.d.guild_id],
+        sessionId: data.d.session_id
+      }
+
+      if (vcsData[data.d.guild_id].server) {
+        const player = new Player(data.d.guild_id)
+
+        if (!player.playerCreated()) return;
+
+        player.update({
+          voice: {
+            token: vcsData[data.d.guild_id].server.token,
+            endpoint: vcsData[data.d.guild_id].server.endpoint,
+            sessionId: vcsData[data.d.guild_id].sessionId
+          }
+        })
+      }
 
       break
+    }
+
+    case 'GUILD_CREATE': {
+      data.d.voice_states.forEach((state: any) => {
+        if (state.user_id != Config.botId) return;
+
+        vcsData[data.d.id] = {
+          ...vcsData[data.d.id],
+          sessionId: state.session_id
+        }
+      })
     }
   }
 }

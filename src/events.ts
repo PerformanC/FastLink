@@ -5,7 +5,7 @@ import trackStart from './events/track/trackStart.js'
 import trackEnds from './events/track/trackEnds.js'
 import websocketClosed from './events/track/websocketClosed.js'
 
-import { ConfigOptions, InternalNodeOptions, InternalPlayerOptions, NodeOptions } from '../index.d.js'
+import { ConfigData, ConfigOptions, InternalNodeData, InternalPlayerData, NodeOptions } from '../index.d.js'
 import PWSL from './ws'
 import Event from 'node:events'
 
@@ -13,7 +13,7 @@ function open(Event: Event, node: string) {
   Event.emit('debug', `[FastLink] Connected to ${node}`)
 }
 
-function message(Event: Event, data: string, node: string, config: ConfigOptions, Nodes: InternalNodeOptions, Players: InternalPlayerOptions): { Nodes: InternalNodeOptions, Players: InternalPlayerOptions } {
+function message(Event: Event, data: string, node: string, config: ConfigData, Nodes: InternalNodeData, Players: InternalPlayerData): { Nodes: InternalNodeData, Players: InternalPlayerData } {
   const payload: any = JSON.parse(data)
 
   Event.emit('raw', payload)
@@ -65,7 +65,7 @@ function message(Event: Event, data: string, node: string, config: ConfigOptions
   return { Nodes, Players }
 }
 
-async function close(Event: Event, ws: PWSL, node: NodeOptions, config: ConfigOptions, Nodes: InternalNodeOptions, Players: InternalPlayerOptions): Promise<{ Nodes: InternalNodeOptions, Players: InternalPlayerOptions, ws: PWSL }> {
+async function close(Event: Event, ws: PWSL, node: NodeOptions, config: ConfigData, Nodes: InternalNodeData, Players: InternalPlayerData): Promise<{ Nodes: InternalNodeData, Players: InternalPlayerData, ws: PWSL }> {
   Event.emit('debug', `[FastLink] Disconnected from ${node.hostname}`)
 
   ws.removeAllListeners()
@@ -80,7 +80,7 @@ async function close(Event: Event, ws: PWSL, node: NodeOptions, config: ConfigOp
   const index = await import('../index.js')
 
   setTimeout(() => {
-    index.default.node.connectNodes([ node ], config)
+    index.default.node.connectNodes([ node ], config as ConfigOptions)
   }, 5000)
 
   return { Nodes, Players, ws }
