@@ -1,6 +1,6 @@
 import { InternalNodeOptions } from '../../index.d'
 import { ReadyData } from './ready.d'
-import Event from 'events'
+import Event from 'node:events'
 
 function ready(Event: Event, payload: any, node: string, Nodes: InternalNodeOptions): InternalNodeOptions {
   Nodes[node].sessionId = payload.sessionId

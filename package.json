@@ -1,6 +1,6 @@
 {
   "name": "@performanc/fastlink",
-  "version": "2.3.1",
+  "version": "2.3.2",
   "description": "Low-level Lavalink/NodeLink wrapper.",
   "main": "index.js",
   "repository": {
@@ -22,6 +22,6 @@
   },
   "homepage": "https://github.com/PerformanC/FastLink#readme",
   "devDependencies": {
-    "@types/node": "^20.8.10"
+    "@types/node": "^20.9.1"
   }
 }

@@ -1,6 +1,6 @@
 import { InternalNodeOptions } from '../../index.d'
 import { StatsData } from './stats.d'
-import Event from 'events'
+import Event from 'node:events'
 
 function stats(Event: Event, payload: any, node: string, Nodes: InternalNodeOptions): InternalNodeOptions {
   Event.emit('debug', `[FastLink] Received stats from ${node}`)

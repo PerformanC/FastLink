@@ -31,7 +31,7 @@ import {
 import { RequestOptions } from './src/utils.d'
 import { TrackData } from './src/events/track/track.d'
 
-import event from 'events'
+import event from 'node:events'
 
 import events from './src/events.js'
 import utils from './src/utils.js'

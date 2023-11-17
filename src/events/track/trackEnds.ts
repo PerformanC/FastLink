@@ -1,8 +1,8 @@
 import utils from '../../utils.js'
 
 import { ConfigOptions, InternalNodeOptions, InternalPlayerOptions } from '../../../index.d'
-import { PartialTrackData } from './track.d'
-import Event from 'events'
+import { PartialTrackData } from './track.js'
+import Event from 'node:events'
 
 function trackEnd(Event: Event, payload: any, node: string, config: ConfigOptions, Nodes: InternalNodeOptions, Players: InternalPlayerOptions): InternalPlayerOptions {
   Event.emit('debug', `[FastLink] ${node} has ended a track`)

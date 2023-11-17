@@ -1,17 +1,17 @@
 import { InternalNodeOptions, InternalPlayerOptions } from '../../../index.d'
 import { WebsocketClosedData } from './websocketClosed.d'
-import Event from 'events'
+import Event from 'node:events'
 
 function websocketClosed(Event: Event, payload: any, node: string, Nodes: InternalNodeOptions, Players: InternalPlayerOptions): InternalPlayerOptions {
-  Event.emit('debug', `[FastLink] ${node} has closed a websocket`)
+  Event.emit('debug', `[FastLink] ${node} has received a WebsocketClosed`)
 
   if (!Players[payload.guildId]) {
-    console.log(`[FastLink] Received WebsocketClosedEvent from ${node} but no player was found`)
+    console.log(`[FastLink] Received WebsocketClosed from ${node} but no player was found`)
 
     return Players
   }
 
-  Players[payload.guildId] = null
+  delete Players[payload.guildId]
  
   Event.emit('websocketClosed', { node: Nodes[node], guildId: payload.guildId as string, payload: payload as WebsocketClosedData })
  

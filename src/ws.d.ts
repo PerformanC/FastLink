@@ -1,6 +1,6 @@
-import { EventEmitter } from 'events'
-import net from 'net'
-import http from 'http'
+import { EventEmitter } from 'node:events'
+import net from 'node:net'
+import http from 'node:http'
 
 export type WebSocketOptions = {
   headers?: http.OutgoingHttpHeaders | undefined,

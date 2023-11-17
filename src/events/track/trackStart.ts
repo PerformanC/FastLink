@@ -1,6 +1,6 @@
 import { ConfigOptions, InternalNodeOptions, InternalPlayerOptions } from '../../../index.d'
 import { PartialTrackData } from './track.d'
-import Event from 'events'
+import Event from 'node:events'
 
 function trackStart(Event: Event, payload: any, node: string, config: ConfigOptions, Nodes: InternalNodeOptions, Players: InternalPlayerOptions): InternalPlayerOptions {
   Event.emit('debug', `[FastLink] ${node} has started a track`)

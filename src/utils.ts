@@ -1,6 +1,6 @@
-import http, { IncomingMessage } from 'http'
-import https from 'https'
-import zlib from 'zlib'
+import http, { IncomingMessage } from 'node:http'
+import https from 'node:https'
+import zlib from 'node:zlib'
 
 import { InternalNodeOptions } from '../index.d'
 import { RequestOptions } from './utils.d'
