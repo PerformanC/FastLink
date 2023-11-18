@@ -17,7 +17,7 @@ function trackEnd(Event: Event, payload: any, node: string, config: ConfigData, 
     return Players
   }
 
-  if (config.queue && payload.reason != 'replaced') {
+  if (name != 'trackException' && config.queue && ['replaced', 'loadFailed'].includes(payload.reason)) {
     player.queue.shift()
 
     if (player.queue.length != 0) {
