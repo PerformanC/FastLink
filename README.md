@@ -61,7 +61,7 @@ const prefix = '!'
 
 events.on('debug', console.log)
 
-client.on('messageCreate', async (message: Discord.Message): Promise<void> => {
+client.on('messageCreate', async (message) => {
   if (message.content.startsWith(prefix + 'decodetrack')) {
     const player = new FastLink.player.Player(message.guild.id)
 

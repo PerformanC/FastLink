@@ -56,7 +56,7 @@ class WebSocket extends EventEmitter {
 
     const request = agent.request((isSecure ? 'https://' : 'http://') + parsedUrl.hostname + parsedUrl.pathname, {
       port: parsedUrl.port || (isSecure ? 443 : 80),
-      timeout: this.options.timeout || 5000,
+      timeout: this.options.timeout || 0,
       createConnection: (options) => {
         if (isSecure) {
           options.path = undefined
@@ -86,7 +86,12 @@ class WebSocket extends EventEmitter {
       this.emit('close')
     })
 
-    request.on('upgrade', (res, socket, _head) => {  
+    request.on('upgrade', (res, socket, head) => {
+      socket.setNoDelay()
+      socket.setKeepAlive(true)
+
+      if (head.length != 0) socket.unshift(head)
+
       if (res.headers.upgrade.toLowerCase() != 'websocket') {
         socket.destroy()
 
@@ -109,55 +114,57 @@ class WebSocket extends EventEmitter {
         switch (headers.opcode) {
           case 0x0: {
             this.cachedData.push(data.subarray(headers.payloadStartIndex).subarray(0, headers.payloadLength))
-
+  
             if (headers.fin) {
               const parsedData = Buffer.concat(this.cachedData)
-
+  
               this.emit('message', parsedData.toString())
-
+  
               this.cachedData = []
             }
-
+  
             break
           }
           case 0x1: {
             const parsedData = data.subarray(headers.payloadStartIndex).subarray(0, headers.payloadLength)
-
+  
             this.emit('message', parsedData.toString())
-
+  
             break
           }
           case 0x2: {
             throw new Error('Binary data is not supported.')
-
+  
             break
           }
           case 0x8: {
             this.emit('close')
-
+  
             break
           }
           case 0x9: {
             const pong = Buffer.allocUnsafe(2)
             pong[0] = 0x8a
             pong[1] = 0x00
-
-            socket.write(pong)
-
+  
+            this.socket.write(pong)
+  
             break
           }
           case 0x10: {
             this.emit('pong')
           }
         }
-
+  
         if (data.length > headers.payloadStartIndex + headers.payloadLength)
-          socket.emit('data', data.subarray(headers.payloadStartIndex + headers.payloadLength))
+          this.socket.unshift(data.subarray(headers.payloadStartIndex + headers.payloadLength))
       })
   
       socket.on('close', () => this.emit('close'))
 
       this.socket = socket
+
+      this.emit('open', socket, res.headers)
     })
 
     request.end()
