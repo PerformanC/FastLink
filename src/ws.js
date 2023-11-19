@@ -6,11 +6,13 @@ import crypto from 'node:crypto'
 import EventEmitter from 'node:events'
 import { URL } from 'node:url'
 
-function parsePacket(data) {
+function parseHeaders(data) {
   let payloadStartIndex = 2
 
   const opcode = data[0] & 0b00001111
+  const fin = (data[0] & 0b10000000) == 0b10000000
 
+  // Line below is experimental, if it doesn't work, comment it.
   if (opcode == 0x0) payloadStartIndex += 2
 
   let payloadLength = data[1] & 0b01111111
@@ -23,7 +25,13 @@ function parsePacket(data) {
     payloadLength = data.readBigUInt64BE(2)
   }
 
-  return data.subarray(payloadStartIndex)
+  return {
+    opcode,
+    fin,
+    payload: data,
+    payloadLength,
+    payloadStartIndex
+  }
 }
 
 class WebSocket extends EventEmitter {
@@ -33,6 +41,7 @@ class WebSocket extends EventEmitter {
     this.url = url
     this.options = options
     this.socket = null
+    this.cachedData = []
 
     this.connect()
 
@@ -94,7 +103,57 @@ class WebSocket extends EventEmitter {
         return;
       }
 
-      socket.on('data', (data) => this.emit('message', parsePacket(data).toString()))
+      socket.on('data', (data) => {
+        const headers = parseHeaders(data)
+
+        switch (headers.opcode) {
+          case 0x0: {
+            this.cachedData.push(data.subarray(headers.payloadStartIndex).subarray(0, headers.payloadLength))
+
+            if (headers.fin) {
+              const parsedData = Buffer.concat(this.cachedData)
+
+              this.emit('message', parsedData.toString())
+
+              this.cachedData = []
+            }
+
+            break
+          }
+          case 0x1: {
+            const parsedData = data.subarray(headers.payloadStartIndex).subarray(0, headers.payloadLength)
+
+            this.emit('message', parsedData.toString())
+
+            break
+          }
+          case 0x2: {
+            throw new Error('Binary data is not supported.')
+
+            break
+          }
+          case 0x8: {
+            this.emit('close')
+
+            break
+          }
+          case 0x9: {
+            const pong = Buffer.allocUnsafe(2)
+            pong[0] = 0x8a
+            pong[1] = 0x00
+
+            socket.write(pong)
+
+            break
+          }
+          case 0x10: {
+            this.emit('pong')
+          }
+        }
+
+        if (data.length > headers.payloadStartIndex + headers.payloadLength)
+          socket.emit('data', data.subarray(headers.payloadStartIndex + headers.payloadLength))
+      })
   
       socket.on('close', () => this.emit('close'))
 
