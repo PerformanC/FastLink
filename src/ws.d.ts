@@ -8,9 +8,10 @@ export type WebSocketOptions = {
 }
 
 export type FrameOptions = {
-  fin: boolean,
   opcode: number,
-  len: number
+  fin: boolean,
+  buffer: Buffer,
+  payloadLength: number
 }
 
 export class WebSocket extends EventEmitter {
