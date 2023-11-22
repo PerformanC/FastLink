@@ -13,7 +13,6 @@ function parseFrameHeader(buffer: Buffer): FrameOptions {
 
   const opcode = buffer[0] & 0b00001111
   const fin = (buffer[0] & 0b10000000) == 0b10000000
-  const isMasked = (buffer[1] & 0x80) == 0x80
   let payloadLength = buffer[1] & 0b01111111
 
   if (payloadLength == 126) {
@@ -26,18 +25,7 @@ function parseFrameHeader(buffer: Buffer): FrameOptions {
     startIndex += 8
   }
 
-  let mask = null
-
-  if (isMasked) {
-    mask = buffer.subarray(startIndex, startIndex + 4)
-    startIndex += 4
-
-    for (let i = 0; i < buffer.length; i++) {
-      buffer[i] ^= mask[i & 3]
-    }
-  } else {
-    buffer = buffer.subarray(startIndex, startIndex + payloadLength)
-  }
+  buffer = buffer.subarray(startIndex, startIndex + payloadLength)
 
   return {
     opcode,
@@ -72,7 +60,7 @@ class WebSocket extends EventEmitter {
     const agent: typeof https | typeof http = isSecure ? https : http
     const key = crypto.randomBytes(16).toString('base64')
 
-    const request = agent.request((isSecure ? 'https://' : 'http://') + parsedUrl.hostname + parsedUrl.pathname, {
+    const request = agent.request((isSecure ? 'https://' : 'http://') + parsedUrl.hostname + parsedUrl.pathname + parsedUrl.search, {
       port: parsedUrl.port || (isSecure ? 443 : 80),
       timeout: this.options.timeout || 0,
       createConnection: (options: http.ClientRequestArgs) => {
@@ -86,7 +74,7 @@ class WebSocket extends EventEmitter {
           return tls.connect(options as tls.ConnectionOptions)
         } else {
           options.path = options.socketPath
-    
+
           return net.connect(options as net.NetConnectOpts)
         }
       },
