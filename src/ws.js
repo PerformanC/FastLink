@@ -30,8 +30,10 @@ function parseFrameHeader(buffer) {
     mask = buffer.subarray(startIndex, startIndex + 4)
     startIndex += 4
 
+    buffer = buffer.subarray(startIndex, startIndex + payloadLength)
+    
     for (let i = 0; i < buffer.length; i++) {
-      buffer[i] ^= mask[i & 3]
+      buffer[i] ^= mask[i & 3];
     }
   } else {
     buffer = buffer.subarray(startIndex, startIndex + payloadLength)
@@ -65,7 +67,7 @@ class WebSocket extends EventEmitter {
     const agent = isSecure ? https : http
     const key = crypto.randomBytes(16).toString('base64')
 
-    const request = agent.request((isSecure ? 'https://' : 'http://') + parsedUrl.hostname + parsedUrl.pathname, {
+    const request = agent.request((isSecure ? 'https://' : 'http://') + parsedUrl.hostname + parsedUrl.pathname + parsedUrl.search, {
       port: parsedUrl.port || (isSecure ? 443 : 80),
       timeout: this.options?.timeout || 0,
       createConnection: (options) => {
