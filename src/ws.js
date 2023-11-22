@@ -11,7 +11,6 @@ function parseFrameHeader(buffer) {
 
   const opcode = buffer[0] & 0b00001111
   const fin = (buffer[0] & 0b10000000) == 0b10000000
-  const isMasked = (buffer[1] & 0x80) == 0x80
   let payloadLength = buffer[1] & 0b01111111
 
   if (payloadLength == 126) {
@@ -24,20 +23,7 @@ function parseFrameHeader(buffer) {
     startIndex += 8
   }
 
-  let mask = null
-
-  if (isMasked) {
-    mask = buffer.subarray(startIndex, startIndex + 4)
-    startIndex += 4
-
-    buffer = buffer.subarray(startIndex, startIndex + payloadLength)
-    
-    for (let i = 0; i < buffer.length; i++) {
-      buffer[i] ^= mask[i & 3];
-    }
-  } else {
-    buffer = buffer.subarray(startIndex, startIndex + payloadLength)
-  }
+  buffer = buffer.subarray(startIndex, startIndex + payloadLength)
 
   return {
     opcode,
@@ -236,12 +222,6 @@ class WebSocket extends EventEmitter {
     this.socket.write(Buffer.concat([header, data]))
 
     return true
-  }
-
-  send(data) {
-    const payload = Buffer.from(data, 'utf-8')
-
-    return this.sendData(payload, { len: payload.length, fin: true, opcode: 0x01, mask: true })
   }
 
   close(code, reason) {
