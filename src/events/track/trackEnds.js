@@ -10,7 +10,7 @@ function trackEnds(Event, payload, node, config, Nodes, Players) {
   if (!player)
     return console.log(`[FastLink] Received ${name} from ${node} but no player was found`)
 
-  if (name != 'trackException' && config.queue && ['replaced', 'loadFailed'].includes(payload.reason)) {
+  if (name != 'trackException' && config.queue && ['finished', 'loadFailed'].includes(payload.reason)) {
     player.queue.shift()
 
     if (player.queue.length != 0) {
