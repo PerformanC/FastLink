@@ -1,4 +1,4 @@
-Custom PerformanC License
+PerformanC's Custom License
 
 Copyright (c) 2023 PerformanC <performancorg@gmail.com>
 
@@ -9,7 +9,9 @@ However, the software code neither can be used to train a neural network,
 nor any part of the code can be copied in any way without the permission
 of the PerformanC Organization team members.
 
-The license can be included at the source code of the PerformanC software, although it is not required.
+The license must included at the source code of the PerformanC software
+outside the official PerformanC repository, followed by the
+URL of the PerformanC GitHub repository.
 
 The Software is given "as is" and without any warranties, 
 and its developers disclaim all liability for any harm it (The Software) may cause.
