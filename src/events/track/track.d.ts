@@ -13,5 +13,6 @@ export type PartialTrackData = {
 export type TrackData = {
   encoded: string,
   info: PartialTrackData,
-  pluginInfo: Object
+  pluginInfo: Object,
+  userData: Object
 }
