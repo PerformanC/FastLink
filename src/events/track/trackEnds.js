@@ -7,8 +7,11 @@ function trackEnds(Event, payload, node, config, Nodes, Players) {
 
   const player = Players[payload.guildId]
 
-  if (!player)
-    return console.log(`[FastLink] Received ${name} from ${node} but no player was found`)
+  if (!player) {
+    console.log(`[FastLink] Received ${name} from ${node} but no player was found`)
+
+    return Players
+  }
 
   if (name != 'trackException' && config.queue && ['finished', 'loadFailed'].includes(payload.reason)) {
     player.queue.shift()

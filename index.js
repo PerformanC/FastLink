@@ -284,7 +284,7 @@ class Player {
    * @throws {None}
    */
   destroy() {  
-    Nodes[this.node].players[this.guildId] = null
+    Players[this.guildId] = null
   
     this.makeRequest(`/sessions/${Nodes[this.node].sessionId}/players/${this.guildId}`, {
       method: 'DELETE'

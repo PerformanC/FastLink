@@ -3,7 +3,11 @@ function trackStart(Event, payload, node, config, Nodes, Players) {
 
   const player = Players[payload.guildId]
 
-  if (!player) return console.log(`[FastLink] Received TrackStartEvent from ${node} but no player was found`)
+  if (!player) {
+    console.log(`[FastLink] Received TrackStartEvent from ${node} but no player was found`)
+
+    return Players
+  }
 
   if (!config.queue) player.track = payload.track
   player.playing = true
