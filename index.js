@@ -352,6 +352,21 @@ class Player {
     }
   }
 
+  shuffle(){
+    if(!Config.queue) throw new Error('Queue is disabled.');
+
+    if(Players[this.guildId].queue.length < 3) throw new Error('Queue must have at least 3 tracks to be shuffled.');
+
+    for (const i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const temp = array[i];
+      array[i] = array[j];
+      array[j] = temp;
+    }
+
+    Players[this.guildId].queue = array;
+  }
+
   /**
    * Decodes a track.
    *
