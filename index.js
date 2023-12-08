@@ -350,6 +350,8 @@ class Player {
       case 'off': Players[this.guildId].loop = 'off'; break;
       default: 'Valid Options: track, queue, off'; break;
     }
+
+    return Players[this.guildId].loop;
   }
 
   shuffle(){
@@ -357,14 +359,14 @@ class Player {
 
     if(Players[this.guildId].queue.length < 3) throw new Error('Queue must have at least 3 tracks to be shuffled.');
 
-    for (const i = array.length - 1; i > 0; i--) {
+    for (const i = Players[this.guildId].queue.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      const temp = array[i];
-      array[i] = array[j];
-      array[j] = temp;
+      const temp = Players[this.guildId].queue[i];
+      Players[this.guildId].queue[i] = Players[this.guildId].queue[j];
+      Players[this.guildId].queue[j] = temp;
     }
 
-    Players[this.guildId].queue = array;
+    return Players[this.guildId].queue;
   }
 
   /**
