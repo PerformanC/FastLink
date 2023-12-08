@@ -65,7 +65,7 @@ client.on('messageCreate', async (message) => {
   if (message.content.startsWith(prefix + 'decodetrack')) {
     const player = new FastLink.player.Player(message.guild.id)
 
-    if (player.playerCreated() == false) {
+    if (player.playerCreated() === false) {
       message.channel.send('No player found.')
 
       return;
@@ -93,7 +93,7 @@ client.on('messageCreate', async (message) => {
 
     const player = new FastLink.player.Player(message.guild.id)
 
-    if (player.playerCreated() == false) player.createPlayer()
+    if (player.playerCreated() === false) player.createPlayer()
 
     player.connect(message.member.voice.channel.id.toString(), { mute: false, deaf: true }, (guildId, payload) => {
       client.guilds.cache.get(guildId).shard.send(payload)
@@ -102,19 +102,19 @@ client.on('messageCreate', async (message) => {
     const music = message.content.replace(prefix + 'play ', '')
     const track = await player.loadTrack((music.startsWith('https://') ? '' : 'ytsearch:') + music)
 
-    if (track.loadType == 'error') {
+    if (track.loadType === 'error') {
       message.channel.send('Something went wrong. ' + track.data.message)
 
       return;
     }
 
-    if (track.loadType == 'empty') {
+    if (track.loadType === 'empty') {
       message.channel.send('No matches found.')
 
       return;
     }
 
-    if (track.loadType == 'playlist') {
+    if (track.loadType === 'playlist') {
       player.update({ encodedTracks: track.data.tracks.map((track) => track.encoded) })
 
       message.channel.send(`Added ${track.data.tracks.length} songs to the queue, and playing ${track.data.tracks[0].info.title}.`)
@@ -122,7 +122,7 @@ client.on('messageCreate', async (message) => {
       return;
     }
 
-    if (track.loadType == 'track' || track.loadType == 'short') {
+    if (track.loadType === 'track' || track.loadType === 'short') {
       player.update({ encodedTrack: track.data.encoded, })
 
       message.channel.send(`Playing ${track.data.info.title} from ${track.data.info.sourceName} from url search.`)
@@ -130,7 +130,7 @@ client.on('messageCreate', async (message) => {
       return;
     }
 
-    if (track.loadType == 'search') {
+    if (track.loadType === 'search') {
       player.update({ encodedTrack: track.data[0].encoded })
 
       message.channel.send(`Playing ${track.data[0].info.title} from ${track.data[0].info.sourceName} from search.`)
@@ -142,7 +142,7 @@ client.on('messageCreate', async (message) => {
   if (message.content.startsWith(prefix + 'volume')) {
     const player = new FastLink.player.Player(message.guild.id)
 
-    if (player.playerCreated() == false) {
+    if (player.playerCreated() === false) {
       message.channel.send('No player found.')
 
       return;
@@ -160,7 +160,7 @@ client.on('messageCreate', async (message) => {
   if (message.content.startsWith(prefix + 'pause')) {
     const player = new FastLink.player.Player(message.guild.id)
 
-    if (player.playerCreated() == false) {
+    if (player.playerCreated() === false) {
       message.channel.send('No player found.')
 
       return;
@@ -176,7 +176,7 @@ client.on('messageCreate', async (message) => {
   if (message.content.startsWith(prefix + 'resume')) {
     const player = new FastLink.player.Player(message.guild.id)
 
-    if (player.playerCreated() == false) {
+    if (player.playerCreated() === false) {
       message.channel.send('No player found.')
 
       return;
@@ -192,7 +192,7 @@ client.on('messageCreate', async (message) => {
   if (message.content.startsWith(prefix + 'skip')) {
     const player = new FastLink.player.Player(message.guild.id)
 
-    if (player.playerCreated() == false) {
+    if (player.playerCreated() === false) {
       message.channel.send('No player found.')
 
       return;
@@ -209,7 +209,7 @@ client.on('messageCreate', async (message) => {
   if (message.content.startsWith(prefix + 'stop')) {
     const player = new FastLink.player.Player(message.guild.id)
 
-    if (player.playerCreated() == false) {
+    if (player.playerCreated() === false) {
       message.channel.send('No player found.')
 
       return;

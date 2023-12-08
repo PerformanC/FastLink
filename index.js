@@ -26,33 +26,33 @@ const Event = new event()
  */
 function connectNodes(nodes, config) {
   if (!nodes) throw new Error('No nodes provided.')
-  if (typeof nodes != 'object') throw new Error('Nodes must be an array.')
+  if (typeof nodes !== 'object') throw new Error('Nodes must be an array.')
 
   if (!config) throw new Error('No config provided.')
-  if (typeof config != 'object') throw new Error('Config must be an object.')
+  if (typeof config !== 'object') throw new Error('Config must be an object.')
 
   if (!config.botId) throw new Error('No botId provided.')
-  if (typeof config.botId != 'string') throw new Error('BotId must be a string.')
+  if (typeof config.botId !== 'string') throw new Error('BotId must be a string.')
 
   if (!config.shards) throw new Error('No shards provided.')
-  if (typeof config.shards != 'number') throw new Error('Shards must be a number.')
+  if (typeof config.shards !== 'number') throw new Error('Shards must be a number.')
 
-  if (config.queue && typeof config.queue != 'boolean') throw new Error('Queue must be a boolean.')
+  if (config.queue && typeof config.queue !== 'boolean') throw new Error('Queue must be a boolean.')
 
   Config = {
     botId: config.botId,
     shards: config.shards,
-    queue: config.queue || false
+    queue: config.queue ?? false
   }
 
   nodes.forEach((node) => {
     if (!node.hostname) throw new Error('No hostname provided.')
-    if (typeof node.hostname != 'string') throw new Error('Hostname must be a string.')
+    if (typeof node.hostname !== 'string') throw new Error('Hostname must be a string.')
 
     if (!node.password) throw new Error('No password provided.')
-    if (typeof node.password != 'string') throw new Error('Password must be a string.')
+    if (typeof node.password !== 'string') throw new Error('Password must be a string.')
 
-    if (typeof node.secure != 'boolean') throw new Error('Secure must be a boolean.')
+    if (typeof node.secure !== 'boolean') throw new Error('Secure must be a boolean.')
 
     if (!node.port) node.port = 2333
 
@@ -100,13 +100,13 @@ function connectNodes(nodes, config) {
  * @returns {boolean} The boolean if any node is connected or not.
  */
 function anyNodeAvailable() {
-  return Object.values(Nodes).filter((node) => node?.connected).length == 0 ? false : true
+  return Object.values(Nodes).filter((node) => node?.connected).length === 0 ? false : true
 }
 
 function getRecommendedNode() {
   const nodes = Object.values(Nodes).filter((node) => node?.connected)
 
-  if (nodes.length == 0) throw new Error('No node connected.')
+  if (nodes.length === 0) throw new Error('No node connected.')
   
   return nodes.sort((a, b) => (a.stats.systemLoad / a.stats.cores) * 100 - (b.stats.systemLoad / b.stats.cores) * 100)[0]
 }
@@ -125,7 +125,7 @@ class Player {
    */
   constructor(guildId) {  
     if (!guildId) throw new Error('No guildId provided.')
-    if (typeof guildId != 'string') throw new Error('GuildId must be a string.')
+    if (typeof guildId !== 'string') throw new Error('GuildId must be a string.')
 
     this.guildId = guildId
     this.node = Players[this.guildId]?.node
@@ -178,13 +178,13 @@ class Player {
    */
   connect(voiceId, options, sendPayload) {  
     if (!voiceId) throw new Error('No voiceId provided.')
-    if (typeof voiceId != 'string') throw new Error('VoiceId must be a string.')
+    if (typeof voiceId !== 'string') throw new Error('VoiceId must be a string.')
 
     if (!options) options = {}
-    if (typeof options != 'object') throw new Error('Options must be an object.')
+    if (typeof options !== 'object') throw new Error('Options must be an object.')
 
     if (!sendPayload) throw new Error('No sendPayload provided.')
-    if (typeof sendPayload != 'function') throw new Error('SendPayload must be a function.')
+    if (typeof sendPayload !== 'function') throw new Error('SendPayload must be a function.')
 
     Players[this.guildId].connected = !!voiceId
   
@@ -193,8 +193,8 @@ class Player {
       d: {
         guild_id: this.guildId,
         channel_id: voiceId,
-        self_mute: options.mute || false,
-        self_deaf: options.deaf || false
+        self_mute: options.mute ?? false,
+        self_deaf: options.deaf ?? false
       }
     })
   }
@@ -208,7 +208,7 @@ class Player {
    */
   loadTrack(search) {  
     if (!search) throw new Error('No search provided.')
-    if (typeof search != 'string') throw new Error('Search must be a string.')
+    if (typeof search !== 'string') throw new Error('Search must be a string.')
   
     return this.makeRequest(`/loadtracks?identifier=${encodeURIComponent(search)}`, {
       method: 'GET'
@@ -225,9 +225,9 @@ class Player {
    */
   loadCaptions(track, lang) {  
     if (!track) throw new Error('No track provided.')
-    if (typeof track != 'string') throw new Error('Track must be a string.')
+    if (typeof track !== 'string') throw new Error('Track must be a string.')
 
-    if (lang && typeof lang != 'string') throw new Error('Lang must be a string.')
+    if (lang && typeof lang !== 'string') throw new Error('Lang must be a string.')
   
     return this.makeRequest(`/loadcaptions?encodedTrack=${encodeURIComponent(track)}${lang ? `&language=${lang}`: ''}`, {
       method: 'GET'
@@ -243,19 +243,19 @@ class Player {
    */
   update(body, noReplace) {  
     if (!body) throw new Error('No body provided.')
-    if (typeof body != 'object') throw new Error('Body must be an object.')
+    if (typeof body !== 'object') throw new Error('Body must be an object.')
   
     if (body.encodedTrack && Config.queue) {
       Players[this.guildId].queue.push(body.encodedTrack)
 
-      if (Players[this.guildId].queue.length != 1) return;
+      if (Players[this.guildId].queue.length !== 1) return;
     } else if (body.encodedTrack !== undefined) Players[this.guildId].queue = []
   
     if (body.encodedTracks) {
       if (!Config.queue)
         throw new Error('Queue is disabled.')
   
-      if (Players[this.guildId].queue.length == 0) {
+      if (Players[this.guildId].queue.length === 0) {
         Players[this.guildId].queue = body.encodedTracks
   
         this.makeRequest(`/sessions/${Nodes[this.node].sessionId}/players/${this.guildId}`, {
@@ -272,7 +272,7 @@ class Player {
       Players[this.guildId].paused = body.paused
     }
   
-    return this.makeRequest(`/sessions/${Nodes[this.node].sessionId}/players/${this.guildId}?noReplace=${noReplace !== true ? false : true}`, {
+    this.makeRequest(`/sessions/${Nodes[this.node].sessionId}/players/${this.guildId}?noReplace=${noReplace !== true ? false : true}`, {
       body,
       method: 'PATCH'
     })
@@ -299,7 +299,7 @@ class Player {
    */
   updateSession(data) {  
     if (!data) throw new Error('No data provided.')
-    if (typeof data != 'object') throw new Error('Data must be an object.')
+    if (typeof data !== 'object') throw new Error('Data must be an object.')
   
     this.makeRequest(`/sessions/${Nodes[this.node].sessionId}`, {
       body: data,
@@ -328,7 +328,7 @@ class Player {
   skipTrack() {  
     if (!Config.queue) throw new Error('Queue is disabled.')
 
-    if (Players[this.guildId].queue.length == 1)
+    if (Players[this.guildId].queue.length === 1)
       return null
 
     Players[this.guildId].queue.shift()
@@ -341,6 +341,17 @@ class Player {
     return Players[this.guildId].queue
   }
 
+  loop(){
+    if(!Config.queue) throw new Error('Queue is disabled.');
+
+    switch(Players[this.guildId].loop){
+      case 'track': Players[this.guildId].loop = 'track'; break;
+      case 'queue': Players[this.guildId].loop = 'queue'; break;
+      case 'off': Players[this.guildId].loop = 'off'; break;
+      default: 'Valid Options: track, queue, off'; break;
+    }
+  }
+
   /**
    * Decodes a track.
    *
@@ -350,7 +361,7 @@ class Player {
    */
   decodeTrack(track) {  
     if (!track) throw new Error('No track provided.')
-    if (typeof track != 'string') throw new Error('Track must be a string.')
+    if (typeof track !== 'string') throw new Error('Track must be a string.')
   
     return this.makeRequest(`/decodetrack?encodedTrack=${track}`, {
       method: 'GET'
@@ -366,7 +377,7 @@ class Player {
    */
   decodeTracks(tracks) {  
     if (!tracks) throw new Error('No tracks provided.')
-    if (typeof tracks != 'object') throw new Error('Tracks must be an array.')
+    if (typeof tracks !== 'object') throw new Error('Tracks must be an array.')
   
     return this.makeRequest(`/decodetracks`, {
       body: tracks,
@@ -388,7 +399,7 @@ class Player {
  */
 function getPlayers(node) {
   if (!node) throw new Error('No node provided.')
-  if (typeof node != 'string') throw new Error('Node must be a string.')
+  if (typeof node !== 'string') throw new Error('Node must be a string.')
 
   if (!Nodes[node]) throw new Error('Node does not exist.')
 
@@ -404,7 +415,7 @@ function getPlayers(node) {
  */
 function getInfo(node) {
   if (!node) throw new Error('No node provided.')
-  if (typeof node != 'string') throw new Error('Node must be a string.')
+  if (typeof node !== 'string') throw new Error('Node must be a string.')
 
   if (!Nodes[node]) throw new Error('Node does not exist.')
 
@@ -420,7 +431,7 @@ function getInfo(node) {
  */
 function getStats(node) {
   if (!node) throw new Error('No node provided.')
-  if (typeof node != 'string') throw new Error('Node must be a string.')
+  if (typeof node !== 'string') throw new Error('Node must be a string.')
 
   if (!Nodes[node]) throw new Error('Node does not exist.')
 
@@ -436,7 +447,7 @@ function getStats(node) {
  */
 function getVersion(node) {
   if (!node) throw new Error('No node provided.')
-  if (typeof node != 'string') throw new Error('Node must be a string.')
+  if (typeof node !== 'string') throw new Error('Node must be a string.')
 
   if (!Nodes[node]) throw new Error('Node does not exist.')
 
@@ -452,7 +463,7 @@ function getVersion(node) {
  */
 function getRouterPlannerStatus(node) {
   if (!node) throw new Error('No node provided.')
-  if (typeof node != 'string') throw new Error('Node must be a string.')
+  if (typeof node !== 'string') throw new Error('Node must be a string.')
 
   if (!Nodes[node]) throw new Error('Node does not exist.')
 
@@ -469,12 +480,12 @@ function getRouterPlannerStatus(node) {
  */
 function unmarkFailedAddress(node, address) {
   if (!node) throw new Error('No node provided.')
-  if (typeof node != 'string') throw new Error('Node must be a string.')
+  if (typeof node !== 'string') throw new Error('Node must be a string.')
 
   if (!Nodes[node]) throw new Error('Node does not exist.')
 
   if (!address) throw new Error('No address provided.')
-  if (typeof address != 'string') throw new Error('Address must be a string.')
+  if (typeof address !== 'string') throw new Error('Address must be a string.')
 
   return utils.makeNodeRequest(Nodes, node, `/v4/routerplanner/free/address?address=${encodeURIComponent(address)}`, {
     method: 'GET',
@@ -491,7 +502,7 @@ function unmarkFailedAddress(node, address) {
  */
 function unmarkAllFailedAddresses(node) {
   if (!node) throw new Error('No node provided.')
-  if (typeof node != 'string') throw new Error('Node must be a string.')
+  if (typeof node !== 'string') throw new Error('Node must be a string.')
 
   if (!Nodes[node]) throw new Error('Node does not exist.')
 
@@ -530,7 +541,7 @@ function handleRaw(data) {
     }
 
     case 'VOICE_STATE_UPDATE': {
-      if (data.d.member.user.id != Config.botId) return;
+      if (data.d.member.user.id !== Config.botId) return;
 
       vcsData[data.d.guild_id] = {
         ...vcsData[data.d.guild_id],
@@ -556,7 +567,7 @@ function handleRaw(data) {
 
     case 'GUILD_CREATE': {
       data.d.voice_states.forEach((state) => {
-        if (state.user_id != Config.botId) return;
+        if (state.user_id !== Config.botId) return;
 
         vcsData[data.d.id] = {
           ...vcsData[data.d.id],
