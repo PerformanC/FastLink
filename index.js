@@ -329,7 +329,7 @@ class Player {
     if (!Config.queue) throw new Error('Queue is disabled.')
 
     if (Players[this.guildId].queue.length === 1)
-      return null
+      return false
 
     Players[this.guildId].queue.shift()
   
@@ -341,32 +341,33 @@ class Player {
     return Players[this.guildId].queue
   }
 
-  loop(){
-    if(!Config.queue) throw new Error('Queue is disabled.');
+  loop() {
+    if (!Config.queue) throw new Error('Queue is disabled.')
 
-    switch(Players[this.guildId].loop){
-      case 'track': Players[this.guildId].loop = 'track'; break;
-      case 'queue': Players[this.guildId].loop = 'queue'; break;
-      case 'off': Players[this.guildId].loop = 'off'; break;
-      default: 'Valid Options: track, queue, off'; break;
+    let loop = null
+    switch (Players[this.guildId].loop){
+      case 'track': loop = 'track'; break;
+      case 'queue': loop = 'queue'; break;
+      case 'off': loop = 'off'; break;
+      default: throw new Error('Invalid option. Available options: track, queue, off')
     }
 
-    return Players[this.guildId].loop;
+    return Players[this.guildId].loop = loop;
   }
 
-  shuffle(){
-    if(!Config.queue) throw new Error('Queue is disabled.');
+  shuffle() {
+    if (!Config.queue) throw new Error('Queue is disabled.')
 
-    if(Players[this.guildId].queue.length < 3) throw new Error('Queue must have at least 3 tracks to be shuffled.');
+    if (Players[this.guildId].queue.length < 3) return false
 
-    for (let i = Players[this.guildId].queue.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      const temp = Players[this.guildId].queue[i];
-      Players[this.guildId].queue[i] = Players[this.guildId].queue[j];
-      Players[this.guildId].queue[j] = temp;
-    }
+    PLayers[this.guild].queue.forEach((_, i) => {
+      const j = Math.floor(Math.random() * (i + 1))
+      const temp = Players[this.guildId].queue[i]
+      Players[this.guildId].queue[i] = Players[this.guildId].queue[j]
+      Players[this.guildId].queue[j] = temp
+    })
 
-    return Players[this.guildId].queue;
+    return Players[this.guildId].queue
   }
 
   /**
