@@ -4,31 +4,29 @@
 
 ## About
 
-FastLink is a NodeJs Lavalink client, with a low-level representation of the Lavalink API, with a simple and easy-to-use API.
-
-Able to be installed in most NodeJs versions, and with low memory usage, FastLink is a good choice for your Discord bot.
-
-## Minimum requirements
-
-- NodeJs 13 or higher (ES6 requirements)
-- Lavalink v4.0.0 or higher
-
-## Recommended requirements
-
-- NodeJs 18 or higher
-- NodeLink
+FastLink is a low-level [Node.js](https://nodejs.org) Lavalink client, with a simple and easy-to-use API. It is made to be fast and lightweight.
 
 ## Installation
 
-You can install FastLink through npm:
+FastLink is both available on [npm](https://npmjs.com) and GitHub Packages. Here's how to install it from npm:
 
 ```bash
 $ npm i @performanc/fastlink
 ```
 
-And that's it, you'll be able to use FastLink in your project.
+## Usage
 
-## Example
+### Minimum requirements
+
+- Node.js 14 or higher
+- Lavalink v4
+
+### Recommended requirements
+
+- NodeJs 18 or higher
+- NodeLink
+
+### Example
 
 ```js
 import FastLink from '@performanc/fastlink'
@@ -46,23 +44,30 @@ const client = new Discord.Client({
   ]
 })
 
+const prefix = '!'
+const botId = 'Your bot Id here'
+const token = 'Your bot token here'
+
 const events = FastLink.node.connectNodes([{
   hostname: '127.0.0.1',
   secure: false,
   password: 'youshallnotpass',
   port: 2333
 }], {
-  botId: 'Your bot Id here',
+  botId,
   shards: 1,
   queue: true
 })
 
-const prefix = '!'
-
 events.on('debug', console.log)
 
 client.on('messageCreate', async (message) => {
-  if (message.content.startsWith(prefix + 'decodetrack')) {
+  if (message.author.bot) return;
+
+  const commandName = message.content.split(' ')[0].toLowerCase().substring(prefix.length)
+  const args = message.content.split(' ').slice(1).join(' ')
+
+  if (commandName == 'decodetrack') {
     const player = new FastLink.player.Player(message.guild.id)
 
     if (player.playerCreated() == false) {
@@ -71,14 +76,14 @@ client.on('messageCreate', async (message) => {
       return;
     }
 
-    let track = await player.decodeTrack(message.content.replace(prefix + 'decodetrack ', ''))
+    const track = await player.decodeTrack(args)
 
     message.channel.send(JSON.stringify(track, null, 2))
 
     return;
   }
 
-  if (message.content.startsWith(prefix + 'play')) {
+  if (commandName == 'play') {
     if (!message.member.voice.channel) {
       message.channel.send('You must be in a voice channel.')
 
@@ -99,8 +104,7 @@ client.on('messageCreate', async (message) => {
       client.guilds.cache.get(guildId).shard.send(payload)
     })
 
-    const music = message.content.replace(prefix + 'play ', '')
-    const track = await player.loadTrack((music.startsWith('https://') ? '' : 'ytsearch:') + music)
+    const track = await player.loadTrack((args.startsWith('https://') ? '' : 'ytsearch:') + args)
 
     if (track.loadType == 'error') {
       message.channel.send('Something went wrong. ' + track.data.message)
@@ -139,7 +143,7 @@ client.on('messageCreate', async (message) => {
     }
   }
 
-  if (message.content.startsWith(prefix + 'volume')) {
+  if (commandName == 'volume') {
     const player = new FastLink.player.Player(message.guild.id)
 
     if (player.playerCreated() == false) {
@@ -149,15 +153,15 @@ client.on('messageCreate', async (message) => {
     }
 
     player.update({
-      volume: parseInt(message.content.replace(prefix + 'volume ', ''))
+      volume: parseInt(args)
     })
 
-    message.channel.send(`Volume set to ${message.content.replace(prefix + 'volume ', '')}`)
+    message.channel.send(`Volume set to ${parseInt(args)}`)
 
     return;
   }
 
-  if (message.content.startsWith(prefix + 'pause')) {
+  if (commandName == 'pause') {
     const player = new FastLink.player.Player(message.guild.id)
 
     if (player.playerCreated() == false) {
@@ -173,7 +177,7 @@ client.on('messageCreate', async (message) => {
     return;
   }
 
-  if (message.content.startsWith(prefix + 'resume')) {
+  if (commandName == 'resume') {
     const player = new FastLink.player.Player(message.guild.id)
 
     if (player.playerCreated() == false) {
@@ -189,7 +193,7 @@ client.on('messageCreate', async (message) => {
     return;
   }
 
-  if (message.content.startsWith(prefix + 'skip')) {
+  if (commandName == 'skip') {
     const player = new FastLink.player.Player(message.guild.id)
 
     if (player.playerCreated() == false) {
@@ -206,7 +210,7 @@ client.on('messageCreate', async (message) => {
     return;
   }
 
-  if (message.content.startsWith(prefix + 'stop')) {
+  if (commandName == 'stop') {
     const player = new FastLink.player.Player(message.guild.id)
 
     if (player.playerCreated() == false) {
@@ -225,19 +229,17 @@ client.on('messageCreate', async (message) => {
 
 client.on('raw', (data) => FastLink.other.handleRaw(data))
 
-client.login('Your bot token here')
+client.login(token)
 ```
 
 ## Documentation
 
 We have a documentation for FastLink, you can find it [here](https://performanc.github.io/FastLinkDocs/). If you have any issue with it, please report it on GitHub Issues.
 
-## Support
+## Support & Feedback
 
-In case of any issue using it (except bugs, that should be reported on GitHub Issues), you are free to ask on PerformanC's [Discord server](https://discord.gg/uPveNfTuCJ).
+If you have any questions, or only want to give a feedback, about FastLink or any other PerformanC project, join [our Discord server](https://discord.gg/uPveNfTuCJ).
 
 ## License
 
-FastLink is licensed under PerformanC's custom license, which is a modified version of the MIT license. You can find it [here](README.md)
-
-The license is made to protect PerformanC's software(s) and to prevent people from stealing our code. You are free to use FastLink in your projects, but you are not allowed to get any part of the code without our permission. You are also not allowed to remove the license from the project.
+FastLink is licensed under PerformanC's License, which is a modified version of the MIT License, focusing on the protection of the source code and the rights of the PerformanC team over the source code.
