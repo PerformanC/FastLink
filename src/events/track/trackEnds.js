@@ -17,8 +17,8 @@ function trackEnds(Event, payload, node, config, Nodes, Players) {
     player.queue.shift()
 
     if (player.queue.length !== 0) {
-      if(player.loop === 'track') player.queue.unshift(player.queue[0]);
-      else if(player.loop === 'queue') player.queue.push(player.queue[0]);
+      if (player.loop === 'track') player.queue.unshift(player.queue[0])
+      else if (player.loop === 'queue') player.queue.push(player.queue[0])
       
       utils.makeNodeRequest(Nodes, node, `/v4/sessions/${Nodes[node].sessionId}/players/${payload.guildId}`, {
         body: {

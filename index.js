@@ -352,13 +352,14 @@ class Player {
       default: throw new Error('Invalid option. Available options: track, queue, off')
     }
 
-    return Players[this.guildId].loop = loop;
+    return Players[this.guildId].loop = loop
   }
 
   shuffle() {
     if (!Config.queue) throw new Error('Queue is disabled.')
 
-    if (Players[this.guildId].queue.length < 3) return false
+    if (Players[this.guildId].queue.length < 3)
+      return false
 
     PLayers[this.guild].queue.forEach((_, i) => {
       const j = Math.floor(Math.random() * (i + 1))
