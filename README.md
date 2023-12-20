@@ -83,6 +83,42 @@ client.on('messageCreate', async (message) => {
     return;
   }
 
+  if (commandName == 'record') {
+    const player = new FastLink.player.Player(message.guild.id)
+
+    if (player.playerCreated() == false) {
+      message.channel.send('No player found.')
+
+      return;
+    }
+
+    const voiceEvents = player.listen()
+
+    voiceEvents.on('endSpeaking', (voice) => {
+      const base64Voice = voice.data
+      const buffer = Buffer.from(base64Voice, 'base64')
+
+      const previousVoice = fs.readFileSync(`./voice-${message.author.id}.ogg`) || null
+      fs.writeFileSync(`./voice-${message.author.id}.ogg`, previousVoice ? Buffer.concat([previousVoice, buffer]) : buffer)
+    })
+
+    message.channel.send('Started recording. Be aware: This will record everything you say in the voice channel, even if the bot is deaf. Server deaf the bot if you don\'t want to be recorded by any chances.')
+  }
+
+  if (commandName == 'stoprecord') {
+    const player = new FastLink.player.Player(message.guild.id)
+
+    if (player.playerCreated() == false) {
+      message.channel.send('No player found.')
+
+      return;
+    }
+
+    player.stopListen()
+
+    message.channel.send('Stopped recording.')
+  }
+
   if (commandName == 'play') {
     if (!message.member.voice.channel) {
       message.channel.send('You must be in a voice channel.')
