@@ -120,6 +120,7 @@ function getRecommendedNode(): InternalNodeData {
 class Player {
   private guildId: string | number
   private node: string
+  private guildWs: PWSL | null
 
   /**
    * Constructs a Player object.
@@ -130,6 +131,7 @@ class Player {
   constructor(guildId: string | number) {
     this.guildId = guildId
     this.node = Players[this.guildId]?.node
+    this.guildWs = null
   }
 
   /**
@@ -345,6 +347,64 @@ class Player {
       body: tracks,
       method: 'POST'
     })
+  }
+
+  /**
+   * Listens to the voice channel. NodeLink only.
+   * 
+   * @returns An event emitter for listening to voice events. open, startSpeaking, endSpeaking, close, error
+   */
+  listen() {
+    const voiceEvents = new event()
+
+    this.guildWs = new PWSL(`ws://${Nodes[this.node].hostname}${Nodes[this.node].port ? `:${Nodes[this.node].port}` : ''}/connection/data`, {
+      headers: {
+        Authorization: Nodes[this.node].password,
+        'user-id': Config.botId,
+        'guild-id': this.guildId,
+        'Client-Name': 'FastLink/2.3.5'
+      }
+    })
+
+    this.guildWs.on('open', () => {
+      voiceEvents.emit('open')
+    })
+
+    this.guildWs.on('message', (data) => {
+      data = JSON.parse(data)
+
+      if (data.type == 'startSpeakingEvent') {
+        voiceEvents.emit('startSpeaking', data.data)
+      }
+
+      if (data.type == 'endSpeakingEvent') {
+        voiceEvents.emit('endSpeaking', data.data)
+      }
+    })
+
+    this.guildWs.on('close', () => {
+      voiceEvents.emit('close')
+    })
+
+    this.guildWs.on('error', (err) => {
+      voiceEvents.emit('error', err)
+    })
+
+    return voiceEvents
+  }
+
+  /**
+   * Stops listening to the voice channel.
+   * 
+   * @returns The boolean if the player is connected or not.
+   */
+  stopListen() {
+    if (!this.guildWs) return false
+
+    this.guildWs.close()
+    this.guildWs = null
+
+    return true
   }
 
   makeRequest(path: string, options: RequestOptions): Promise<any> {
