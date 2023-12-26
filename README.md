@@ -64,7 +64,12 @@ const prefix = '!'
 events.on('debug', console.log)
 
 client.on('messageCreate', async (message: Discord.Message): Promise<void> => {
-  if (message.content.startsWith(prefix + 'decodetrack')) {
+  if (message.author.bot) return;
+
+  const commandName = message.content.split(' ')[0].toLowerCase().substring(prefix.length)
+  const args = message.content.split(' ').slice(1).join(' ')
+
+  if (commandName == 'decodetrack') {
     const player = new FastLink.player.Player(message.guild.id)
 
     if (player.playerCreated() == false) {
@@ -73,14 +78,50 @@ client.on('messageCreate', async (message: Discord.Message): Promise<void> => {
       return;
     }
 
-    let track = await player.decodeTrack(message.content.replace(prefix + 'decodetrack ', ''))
+    let track = await player.decodeTrack(args)
 
     message.channel.send(JSON.stringify(track, null, 2))
 
     return;
   }
 
-  if (message.content.startsWith(prefix + 'play')) {
+    if (commandName == 'record') {
+    const player = new FastLink.player.Player(message.guild.id)
+
+    if (player.playerCreated() == false) {
+      message.channel.send('No player found.')
+
+      return;
+    }
+
+    const voiceEvents = player.listen()
+
+    voiceEvents.on('endSpeaking', (voice) => {
+      const base64Voice = voice.data
+      const buffer = Buffer.from(base64Voice, 'base64')
+
+      const previousVoice = fs.readFileSync(`./voice-${message.author.id}.ogg`) || null
+      fs.writeFileSync(`./voice-${message.author.id}.ogg`, previousVoice ? Buffer.concat([previousVoice, buffer]) : buffer)
+    })
+
+    message.channel.send('Started recording. Be aware: This will record everything you say in the voice channel, even if the bot is deaf. Server deaf the bot if you don\'t want to be recorded by any chances.')
+  }
+
+  if (commandName == 'stoprecord') {
+    const player = new FastLink.player.Player(message.guild.id)
+
+    if (player.playerCreated() == false) {
+      message.channel.send('No player found.')
+
+      return;
+    }
+
+    player.stopListen()
+
+    message.channel.send('Stopped recording.')
+  }
+
+  if (commandName == 'play') {
     if (!message.member.voice.channel) {
       message.channel.send('You must be in a voice channel.')
 
@@ -101,8 +142,7 @@ client.on('messageCreate', async (message: Discord.Message): Promise<void> => {
       client.guilds.cache.get(guildId).shard.send(payload)
     })
 
-    const music = message.content.replace(prefix + 'play ', '')
-    const track = await player.loadTrack((music.startsWith('https://') ? '' : 'ytsearch:') + music)
+    const track = await player.loadTrack((args.startsWith('https://') ? '' : 'ytsearch:') + args)
 
     if (track.loadType == 'error') {
       message.channel.send('Something went wrong. ' + track.data.message)
@@ -141,7 +181,7 @@ client.on('messageCreate', async (message: Discord.Message): Promise<void> => {
     }
   }
 
-  if (message.content.startsWith(prefix + 'volume')) {
+  if (commandName == 'volume') {
     const player = new FastLink.player.Player(message.guild.id)
 
     if (player.playerCreated() == false) {
@@ -151,15 +191,15 @@ client.on('messageCreate', async (message: Discord.Message): Promise<void> => {
     }
 
     player.update({
-      volume: parseInt(message.content.replace(prefix + 'volume ', ''))
+      volume: parseInt(args)
     })
 
-    message.channel.send(`Volume set to ${message.content.replace(prefix + 'volume ', '')}`)
+    message.channel.send(`Volume set to ${args}`)
 
     return;
   }
 
-  if (message.content.startsWith(prefix + 'pause')) {
+  if (commandName == 'pause') {
     const player = new FastLink.player.Player(message.guild.id)
 
     if (player.playerCreated() == false) {
@@ -175,7 +215,7 @@ client.on('messageCreate', async (message: Discord.Message): Promise<void> => {
     return;
   }
 
-  if (message.content.startsWith(prefix + 'resume')) {
+  if (commandName == 'resume') {
     const player = new FastLink.player.Player(message.guild.id)
 
     if (player.playerCreated() == false) {
@@ -191,7 +231,7 @@ client.on('messageCreate', async (message: Discord.Message): Promise<void> => {
     return;
   }
 
-  if (message.content.startsWith(prefix + 'skip')) {
+  if (commandName == 'skip') {
     const player = new FastLink.player.Player(message.guild.id)
 
     if (player.playerCreated() == false) {
@@ -208,7 +248,7 @@ client.on('messageCreate', async (message: Discord.Message): Promise<void> => {
     return;
   }
 
-  if (message.content.startsWith(prefix + 'stop')) {
+  if (commandName == 'stop') {
     const player = new FastLink.player.Player(message.guild.id)
 
     if (player.playerCreated() == false) {
