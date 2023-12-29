@@ -1,5 +1,5 @@
-import { InternalNodeData, InternalPlayerData } from '../../../index.d'
-import { WebsocketClosedData } from './websocketClosed.d'
+import { InternalNodeData, InternalPlayerData } from '../../../indexTypes'
+import { WebsocketClosedData } from './websocketClosedTypes'
 import Event from 'node:events'
 
 function websocketClosed(Event: Event, payload: any, node: string, Nodes: InternalNodeData, Players: InternalPlayerData): InternalPlayerData {

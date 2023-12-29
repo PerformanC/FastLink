@@ -1,11 +1,11 @@
-import ready from './events/ready.js'
-import playerUpdate from './events/playerUpdate.js'
-import stats from './events/stats.js'
-import trackStart from './events/track/trackStart.js'
-import trackEnds from './events/track/trackEnds.js'
-import websocketClosed from './events/track/websocketClosed.js'
+import ready from './events/ready'
+import playerUpdate from './events/playerUpdate'
+import stats from './events/stats'
+import trackStart from './events/track/trackStart'
+import trackEnds from './events/track/trackEnds'
+import websocketClosed from './events/track/websocketClosed'
 
-import { ConfigData, ConfigOptions, InternalNodeData, InternalPlayerData, NodeOptions } from '../index.d.js'
+import { ConfigData, ConfigOptions, InternalNodeData, InternalPlayerData, NodeOptions } from '../indexTypes'
 import PWSL from './ws'
 import Event from 'node:events'
 

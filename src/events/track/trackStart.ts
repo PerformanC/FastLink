@@ -1,5 +1,5 @@
-import { ConfigData, InternalNodeData, InternalPlayerData } from '../../../index.d'
-import { PartialTrackData } from './track.d'
+import { ConfigData, InternalNodeData, InternalPlayerData } from '../../../indexTypes'
+import { PartialTrackData } from './trackTypes'
 import Event from 'node:events'
 
 function trackStart(Event: Event, payload: any, node: string, config: ConfigData, Nodes: InternalNodeData, Players: InternalPlayerData): InternalPlayerData {

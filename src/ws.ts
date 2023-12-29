@@ -6,7 +6,7 @@ import crypto from 'node:crypto'
 import EventEmitter from 'node:events'
 import { URL } from 'node:url'
 
-import { WebSocketOptions, FrameOptions } from './ws.d'
+import { WebSocketOptions, FrameOptions } from './wsTypes'
 
 function parseFrameHeader(buffer: Buffer): FrameOptions {
   let startIndex = 2
@@ -137,8 +137,6 @@ class WebSocket extends EventEmitter {
           }
           case 0x2: {
             throw new Error('Binary data is not supported.')
-
-            break
           }
           case 0x8: {
             if (headers.buffer.length == 0) {

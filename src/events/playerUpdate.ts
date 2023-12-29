@@ -1,5 +1,5 @@
-import { InternalNodeData } from '../../index.d'
-import { PlayerUpdateData } from './playerUpdate.d'
+import { InternalNodeData } from '../../indexTypes'
+import { PlayerUpdateData } from './playerUpdateTypes'
 import Event from 'node:events'
 
 function playerUpdate(Event: Event, payload: any, node: string, Nodes: InternalNodeData): void {

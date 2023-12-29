@@ -1,5 +1,5 @@
-import { PlayerData, NodeData } from '../../../index.d'
-import { PartialTrackData } from './track.d'
+import { PlayerData, NodeData } from '../../../indexTypes'
+import { PartialTrackData } from './trackTypes'
 
 export type TrackEndData = {
   node: NodeData,

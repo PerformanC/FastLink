@@ -28,15 +28,15 @@ import {
   NodeInfoData,
   RequestStatsData,
   RouterPlannerStatusData
-} from './index.d'
-import { RequestOptions } from './src/utils.d'
-import { TrackData } from './src/events/track/track.d'
+} from './indexTypes'
+import { RequestOptions } from './src/utilsTypes'
+import { TrackData } from './src/events/track/trackTypes'
 
 import event from 'node:events'
 
-import events from './src/events.js'
-import utils from './src/utils.js'
-import PWSL from './src/ws.js'
+import events from './src/events'
+import utils from './src/utils'
+import PWSL from './src/ws'
 
 let Config: ConfigData = {}
 let Nodes: InternalNodeData = {}

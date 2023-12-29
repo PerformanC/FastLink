@@ -2,8 +2,8 @@ import http, { IncomingMessage } from 'node:http'
 import https from 'node:https'
 import zlib from 'node:zlib'
 
-import { InternalNodeData } from '../index.d'
-import { RequestOptions } from './utils.d'
+import { InternalNodeData } from '../indexTypes'
+import { RequestOptions } from './utilsTypes'
 
 async function makeNodeRequest(Nodes: InternalNodeData, node: string, endpoint: string, options: RequestOptions): Promise<any> {
   return new Promise(async (resolve) => {

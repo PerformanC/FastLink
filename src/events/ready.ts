@@ -1,5 +1,5 @@
-import { InternalNodeData } from '../../index.d'
-import { ReadyData } from './ready.d'
+import { InternalNodeData } from '../../indexTypes'
+import { ReadyData } from './readyTypes'
 import Event from 'node:events'
 
 function ready(Event: Event, payload: any, node: string, Nodes: InternalNodeData): InternalNodeData {

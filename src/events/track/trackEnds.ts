@@ -1,7 +1,7 @@
 import utils from '../../utils.js'
 
-import { ConfigData, InternalNodeData, InternalPlayerData } from '../../../index.d'
-import { TrackEndData, TrackExceptionData, TrackStuckData } from './trackEnds.d'
+import { ConfigData, InternalNodeData, InternalPlayerData } from '../../../indexTypes'
+import { TrackEndData, TrackExceptionData, TrackStuckData } from './trackEndsTypes'
 import Event from 'node:events'
 
 function trackEnd(Event: Event, payload: any, node: string, config: ConfigData, Nodes: InternalNodeData, Players: InternalPlayerData): InternalPlayerData {

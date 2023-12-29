@@ -1,5 +1,5 @@
-import { InternalNodeData } from '../../index.d'
-import { StatsData } from './stats.d'
+import { InternalNodeData } from '../../indexTypes'
+import { StatsData } from './statsTypes'
 import Event from 'node:events'
 
 function stats(Event: Event, payload: any, node: string, Nodes: InternalNodeData): InternalNodeData {
