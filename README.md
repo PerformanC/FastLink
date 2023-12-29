@@ -25,7 +25,7 @@ Able to be installed in most NodeJS versions, and with low memory usage, FastLin
 You can install FastLink through npm:
 
 ```bash
-$ npm i PerformanC/FastLink#ts
+$ npm i @performanc/fastlink.ts
 ```
 
 And that's it, you'll be able to use FastLink in your project.
@@ -33,7 +33,9 @@ And that's it, you'll be able to use FastLink in your project.
 ## Example
 
 ```ts
-import FastLink from '@performanc/fastlink'
+import fs from 'node:fs'
+
+import FastLink from '@performanc/fastlink.ts'
 import Discord from 'discord.js'
 
 const client = new Discord.Client({
