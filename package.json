@@ -1,6 +1,6 @@
 {
   "name": "@performanc/fastlink.ts",
-  "version": "2.3.5-2",
+  "version": "2.3.5-3",
   "description": "Low-level Lavalink/NodeLink wrapper.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
