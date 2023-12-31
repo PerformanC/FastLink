@@ -213,8 +213,8 @@ class Player {
    * @throws Error If the track is not provided or is of invalid type.
    * @return A Promise that resolves to the loaded lyrics data.
    */
-  loadCaptions(track: string, lang: string) {
-    return this.makeRequest(`/loadcaptions?encodedTrack=${encodeURIComponent(track)}${lang ? `&language=${lang}`: ''}`, {
+  loadLyrics(track: string, lang: string): Promise<LyricsSData | LyricsMData> {
+    return this.makeRequest(`/loadlyrics?encodedTrack=${encodeURIComponent(track)}${lang ? `&language=${lang}`: ''}`, {
       method: 'GET'
     })
   }
