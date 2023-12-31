@@ -1,34 +1,30 @@
 # Fastlink
 
-[![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/5944/badge)](https://bestpractices.coreinfrastructure.org/projects/5944) [![Discord Server](https://img.shields.io/discord/1036045973039890522?color=5865F2&logo=discord&logoColor=white)](https://discord.gg/uPveNfTuCJ) [![FastLink package size](https://packagephobia.now.sh/badge?p=@performanc/fastlink)](https://packagephobia.now.sh/result?p=@performanc/fastlink)
+[![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/5944/badge)](https://bestpractices.coreinfrastructure.org/projects/5944) [![Discord Server](https://img.shields.io/discord/1036045973039890522?color=5865F2&logo=discord&logoColor=white)](https://discord.gg/uPveNfTuCJ) [![FastLink.ts package size](https://packagephobia.now.sh/badge?p=@performanc/fastlink.ts)](https://packagephobia.now.sh/result?p=@performanc/fastlink.ts)
 
 ## About
 
-FastLink is a NodeJS Lavalink client, with a low-level representation of the Lavalink API, with a simple and easy-to-use API.
-
-Able to be installed in most NodeJS versions, and with low memory usage, FastLink is a good choice for your Discord bot.
+FastLink.ts is a low-level [Node.js](https://nodejs.org) Lavalink client, written in TypeScript, with a simple and easy-to-use API. It is made to be fast and lightweight.
 
 **OBS**: This is the TypeScript branch of FastLink, it diverges internally, but API usage is the same.
 
-## Minimum requirements
+### Minimum requirements
 
-- NodeJS 13 or higher (ES6 requirements)
-- Lavalink v4.0.0 or higher
+- Node.js 14 or higher
+- Lavalink v4
 
-## Recommended requirements
+### Recommended requirements
 
-- NodeJS 18 or higher
+- Node.js 18 or higher
 - NodeLink
 
 ## Installation
 
-You can install FastLink through npm:
+FastLink.ts is only available on [npm](https://npmjs.com). Here's how to install it:
 
 ```bash
 $ npm i @performanc/fastlink.ts
 ```
-
-And that's it, you'll be able to use FastLink in your project.
 
 ## Example
 
@@ -89,7 +85,7 @@ client.on('messageCreate', async (message: Discord.Message): Promise<void> => {
     return;
   }
 
-    if (commandName == 'record') {
+  if (commandName == 'record') {
     const player = new FastLink.player.Player(message.guild.id)
 
     if (player.playerCreated() == false) {
@@ -160,7 +156,7 @@ client.on('messageCreate', async (message: Discord.Message): Promise<void> => {
       return;
     }
 
-    if (track.loadType == 'playlist') {
+    if ([ 'playlist', 'album', 'station' ].includes(track.loadType)) {
       player.update({
         tracks: {
           encodeds: track.data.tracks.map((track) => track.encoded)
@@ -172,7 +168,7 @@ client.on('messageCreate', async (message: Discord.Message): Promise<void> => {
       return;
     }
 
-    if (track.loadType == 'track' || track.loadType == 'short') {
+    if ([ 'track', 'short' ].includes(track.loadType)) {
       player.update({
         track: {
           encoded: track.data.encoded
@@ -292,7 +288,7 @@ client.login(token)
 
 ## Documentation
 
-We have a documentation for FastLink, you can find it [here](https://performanc.github.io/FastLinkDocs/). If you have any issue with it, please report it on GitHub Issues.
+We have a [documentation for FastLink](https://performanc.github.io/FastLinkDocs/). If you have any issue with it, please report it on GitHub Issues.
 
 ## Support
 
@@ -300,6 +296,4 @@ In case of any issue using it (except bugs, that should be reported on GitHub Is
 
 ## License
 
-FastLink is licensed under PerformanC's custom license, which is a modified version of the MIT license. You can find it [here](README.md)
-
-The license is made to protect PerformanC's software(s) and to prevent people from stealing our code. You are free to use FastLink in your projects, but you are not allowed to get any part of the code without our permission. You are also not allowed to remove the license from the project.
+FastLink is licensed under PerformanC's License, which is a modified version of the MIT License, focusing on the protection of the source code and the rights of the PerformanC team over the source code.
