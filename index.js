@@ -214,20 +214,20 @@ class Player {
   }
 
   /**
-   * Loads captions for a given track.
+   * Loads lyrics for a given track.
    * 
-   * @param track The track to load captions for.
-   * @param lang The language to load captions for. Optional.
+   * @param track The track to load lyrics for.
+   * @param lang The language to load lyrics for. Optional.
    * @throws Error If the track is not provided or is of invalid type.
-   * @return A Promise that resolves to the loaded captions data.
+   * @return A Promise that resolves to the loaded lyrics data.
    */
-  loadCaptions(track, lang) {  
+  loadLyrics(track, lang) {  
     if (!track) throw new Error('No track provided.')
     if (typeof track != 'string') throw new Error('Track must be a string.')
 
     if (lang && typeof lang != 'string') throw new Error('Lang must be a string.')
-  
-    return this.makeRequest(`/loadcaptions?encodedTrack=${encodeURIComponent(track)}${lang ? `&language=${lang}`: ''}`, {
+
+    return this.makeRequest(`/loadlyrics?encodedTrack=${encodeURIComponent(track)}${lang ? `&language=${lang}`: ''}`, {
       method: 'GET'
     })
   }
