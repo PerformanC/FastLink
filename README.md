@@ -23,7 +23,7 @@ $ npm i @performanc/fastlink
 
 ### Recommended requirements
 
-- NodeJs 18 or higher
+- Node.js 18 or higher
 - NodeLink
 
 ### Example
@@ -166,7 +166,7 @@ client.on('messageCreate', async (message) => {
       return;
     }
 
-    if (track.loadType == 'track' || track.loadType == 'short') {
+    if ([ 'track', 'short' ].includes(track)) {
       player.update({ 
         track: {
           encoded: track.data.encoded
@@ -286,7 +286,7 @@ client.login(token)
 
 ## Documentation
 
-We have a documentation for FastLink, you can find it [here](https://performanc.github.io/FastLinkDocs/). If you have any issue with it, please report it on GitHub Issues.
+We have a [documentation for FastLink](https://performanc.github.io/FastLinkDocs/). If you have any issue with it, please report it on GitHub Issues.
 
 ## Support & Feedback
 
