@@ -232,7 +232,9 @@ class Player {
     if (body.track?.encoded && Config.queue) {
       Players[this.guildId].queue.push(body.track.encoded)
 
-      if (Players[this.guildId].queue.length != 1) return;
+      if (Players[this.guildId].queue.length != 1 && Object.keys(body).length == 1 && !body.track.userData) return;
+
+      delete body.track.encoded
     } else if (body.track?.encoded === null) Players[this.guildId].queue = []
   
     if (body.tracks?.encodeds) {
@@ -244,7 +246,9 @@ class Player {
   
         this.makeRequest(`/sessions/${Nodes[this.node].sessionId}/players/${this.guildId}`, {
           body: {
+            ...body,
             track: {
+              ...body.track,
               encoded: body.tracks.encodeds[0]
             }
           },
@@ -260,7 +264,7 @@ class Player {
       Players[this.guildId].paused = body.paused
     }
   
-    return this.makeRequest(`/sessions/${Nodes[this.node].sessionId}/players/${this.guildId}?noReplace=${noReplace !== true ? false : true}`, {
+    this.makeRequest(`/sessions/${Nodes[this.node].sessionId}/players/${this.guildId}?noReplace=${noReplace !== true ? false : true}`, {
       body,
       method: 'PATCH'
     })
