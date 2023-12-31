@@ -219,6 +219,24 @@ type VoiceData = {
   sessionId: string
 }
 
+export type LyricsSData = {
+  type: 'lyricsSingle',
+  data: {
+    name: string,
+    data: string,
+    rtl: boolean
+  }
+}
+
+export type LyricsMData = {
+  type: 'lyricsMultiple',
+  data: Array<{
+    name: string,
+    data: string,
+    rtl: boolean
+  }>
+}
+
 export type UpdatePlayerData = {
   track?: {
     encoded?: string | null,

@@ -22,6 +22,8 @@ import {
   LoadSearchData,
   LoadEmptyData,
   LoadErrorData,
+  LyricsSData,
+  LyricsMData,
   UpdatePlayerOptions,
   UpdatePlayerData,
   PlayersData,
@@ -48,10 +50,10 @@ const Event = new event()
 /**
  * Connects node's WebSocket server for communication.
  *
- * @param {Array} An array of node objects containing connection details.
- * @param {Object} Configuration object containing botId, shards, queue, and debug options.
- * @throws {Error} If nodes or config is not provided or not in the expected format.
- * @returns {Object} Event object representing the WebSocket event handlers.
+ * @param nodes An array of node objects containing connection details.
+ * @param config Configuration object containing botId, shards, queue, and debug options.
+ * @throws Error If nodes or config is not provided or not in the expected format.
+ * @returns Event emitter for listening to LavaLink events.
  */
 function connectNodes(nodes: Array<NodeOptions>, config: ConfigOptions) {
   Config = config
@@ -98,7 +100,7 @@ function connectNodes(nodes: Array<NodeOptions>, config: ConfigOptions) {
 /**
  * Checks if any node is connected.
  *
- * @returns {boolean} The boolean if any node is connected or not.
+ * @returns The boolean if any node is connected or not.
  */
 function anyNodeAvailable(): boolean {
   return Object.values(Nodes).filter((node: InternalNodeData) => node?.connected).length == 0 ? false : true
@@ -125,8 +127,8 @@ class Player {
   /**
    * Constructs a Player object.
    *
-   * @param {string} The ID of the guild that will be associated with the player.
-   * @throws {Error} If the guildId is not provided, or if they are of invalid type.
+   * @param guildId The ID of the guild that will be associated with the player.
+   * @throws Error If the guildId is not provided, or if they are of invalid type.
    */
   constructor(guildId: string | number) {
     this.guildId = guildId
@@ -135,11 +137,9 @@ class Player {
   }
 
   /**
-   * Creates a player for the specified guildId.
+   * Creates a player for the guild.
    *
-   * @param {string} The ID of the guild for which the player is being created.
-   * @throws {Error} If guildId is not provided or not a string.
-   * @returns {string} The hostname of the recommended node for the player.
+   * @throws Error If a player already exists for the guild.
    */
   createPlayer(): void {
     if (Players[this.guildId])
@@ -162,10 +162,9 @@ class Player {
   }
 
   /**
-   * Verifies if a player exists for the specified guildId.
+   * Verifies if a player exists for the guild.
    * 
-   * @param {string} The ID of the guild for which the player is being retrieved.
-   * @returns {boolean} The boolean if the player exists or not.
+   * @returns The boolean if the player exists or not.
    */
   playerCreated(): boolean {
     return Players[this.guildId] ? true : false
@@ -174,10 +173,10 @@ class Player {
   /**
    * Connects to a voice channel.
    *
-   * @param {string} The ID of the voice channel to connect to.
-   * @param {Object} Options for the connection, deaf or mute.
-   * @param {Function} A function for sending payload data.
-   * @throws {Error} If the voiceId or sendPayload is not provided, or if they are of invalid type.
+   * @param voiceId The ID of the voice channel to connect to.
+   * @param options Options for the connection, deaf or mute.
+   * @param sendPayload A function for sending payload data.
+   * @throws Error If the voiceId or sendPayload is not provided, or if they are of invalid type.
    */
   connect(voiceId: string | number, options: ConnectOptions, sendPayload: Function): void {  
     Players[this.guildId].connected = !!voiceId
@@ -196,9 +195,9 @@ class Player {
   /**
    * Loads a track.
    *
-   * @param {string} The search query for the track.
-   * @return {TrackData} The loaded track data.
-   * @throws {Error} If the search is not provided or is of invalid type.
+   * @param search The search query for the track.
+   * @return The loaded track data.
+   * @throws Error If the search is not provided or is of invalid type.
    */
   loadTrack(search: string): Promise<LoadTrackData | LoadShortData | LoadPlaylistData | LoadAlbumData | LoadArtistData | LoadShowData | LoadPodcastData | LoadStationData | LoadSearchData | LoadEmptyData | LoadErrorData> {  
     return this.makeRequest(`/loadtracks?identifier=${encodeURIComponent(search)}`, {
@@ -207,14 +206,13 @@ class Player {
   }
 
   /**
-   * Loads captions for a given track.
+   * Loads lyrics for a given track.
    * 
-   * @param {string} The track to load captions for.
-   * @param {string?} The language to load captions for.
-   * @throws {Error} If the track is not provided or is of invalid type.
-   * @return {Promise} A Promise that resolves to the loaded captions data.
+   * @param track The track to load lyrics for.
+   * @param lang The language to load lyrics for. Optional.
+   * @throws Error If the track is not provided or is of invalid type.
+   * @return A Promise that resolves to the loaded lyrics data.
    */
-  // Misses typing, unstable endpoint.
   loadCaptions(track: string, lang: string) {
     return this.makeRequest(`/loadcaptions?encodedTrack=${encodeURIComponent(track)}${lang ? `&language=${lang}`: ''}`, {
       method: 'GET'
@@ -224,9 +222,9 @@ class Player {
   /**
    * Updates the player state.
    *
-   * @param {Object} body The body of the update request.
-   * @param {boolean} Optional flag to specify whether to replace the existing track or not.
-   * @throws {Error} If the body is not provided or is of invalid type.
+   * @param body The body of the update request.
+   * @param noReplace Flag to specify whether to replace the existing track or not. Optional.
+   * @throws Error If the body is not provided or is of invalid type.
    */
   update(body: UpdatePlayerOptions, noReplace?: boolean): Promise<UpdatePlayerData> | void {
     if (body.track?.encoded && Config.queue) {
@@ -272,8 +270,6 @@ class Player {
 
   /**
    * Destroys the player.
-   *
-   * @throws {None}
    */
   destroy(): void {
     Players[this.guildId] = null
@@ -286,8 +282,8 @@ class Player {
   /**
    * Updates the session data for the player.
    *
-   * @param {Object} The session data to update.
-   * @throws {Error} If the data is not provided or is of invalid type.
+   * @param data The session data to update.
+   * @throws Error If the data is not provided or is of invalid type.
    */
   updateSession(data: Object): void {
     this.makeRequest(`/sessions/${Nodes[this.node].sessionId}`, {
@@ -299,8 +295,8 @@ class Player {
   /**
    * Gets the queue of tracks.
    *
-   * @return {Array<string>} The queue of tracks.
-   * @throws {Error} If the queue is disabled.
+   * @return The queue of tracks.
+   * @throws Error If the queue is disabled.
    */
   getQueue(): Array<string> {
     if (!Config.queue) throw new Error('Queue is disabled.')
@@ -311,8 +307,8 @@ class Player {
   /**
    * Skips the currently playing track.
    *
-   * @return {Array<string> | null} The queue of tracks.
-   * @throws {Error} If the queue is disabled
+   * @return The queue of tracks, or null if there is no queue.
+   * @throws Error If the queue is disabled
    */
   skipTrack(): Array<string> | null {
     if (!Config.queue) throw new Error('Queue is disabled.')
@@ -337,9 +333,9 @@ class Player {
   /**
    * Decodes a track.
    *
-   * @param {string} The array to decode.
-   * @throws {Error} If a track is not provided or if track is not a string.
-   * @return {Promise} A Promise that resolves to the decoded data.
+   * @param track The array to decode.
+   * @throws Error If a track is not provided or if track is not a string.
+   * @return A Promise that resolves to the decoded data.
    */
   decodeTrack(track: string): Promise<TrackData> {
     return this.makeRequest(`/decodetrack?encodedTrack=${track}`, {
@@ -350,9 +346,9 @@ class Player {
   /**
    * Decodes an array of tracks.
    *
-   * @param {Array} The array of tracks to decode.
-   * @throws {Error} If no tracks are provided or if tracks is not an array.
-   * @return {Promise} A Promise that resolves to the decoded data.
+   * @param tracks The array of tracks to decode.
+   * @throws Error If no tracks are provided or if tracks is not an array.
+   * @return A Promise that resolves to the decoded data.
    */
   decodeTracks(tracks: Array<string>): Promise<Array<TrackData>> {
     return this.makeRequest(`/decodetracks`, {
@@ -427,9 +423,9 @@ class Player {
 /**
  * Retrieves the players for a given node.
  *
- * @param {string} The node to retrieve players from.
- * @throws {Error} If no node is provided or if node is not a string.
- * @return {Promise} A Promise that resolves to the retrieved player data.
+ * @param node The node to retrieve players from.
+ * @throws Error If no node is provided or if node is not a string.
+ * @return A Promise that resolves to the retrieved player data.
  */
 function getPlayers(node: string): Promise<PlayersData> {
   if (!Nodes[node]) throw new Error('Node does not exist.')
@@ -440,9 +436,9 @@ function getPlayers(node: string): Promise<PlayersData> {
 /**
  * Retrieves the info for a given node.
  *
- * @param {string} The node to retrieve info from.
- * @throws {Error} If no node is provided or if node is not a string.
- * @return {Promise} A Promise that resolves to the retrieved info data.
+ * @param node The node to retrieve info from.
+ * @throws Error If no node is provided or if node is not a string.
+ * @return A Promise that resolves to the retrieved info data.
  */
 function getInfo(node: string): Promise<NodeInfoData> {
   if (!Nodes[node]) throw new Error('Node does not exist.')
@@ -453,9 +449,9 @@ function getInfo(node: string): Promise<NodeInfoData> {
 /**
  * Retrieves the stats for a given node.
  *
- * @param {string} The node to retrieve stats from.
- * @throws {Error} If no node is provided or if node is not a string.
- * @return {Promise} A Promise that resolves to the retrieved stats data.
+ * @param node The node to retrieve stats from.
+ * @throws Error If no node is provided or if node is not a string.
+ * @return A Promise that resolves to the retrieved stats data.
  */
 function getStats(node: string): Promise<RequestStatsData> {
   if (!Nodes[node]) throw new Error('Node does not exist.')
@@ -466,9 +462,9 @@ function getStats(node: string): Promise<RequestStatsData> {
 /**
  * Retrieves the version for a given node.
  *
- * @param {string} The node to retrieve version from.
- * @throws {Error} If no node is provided or if node is not a string.
- * @return {Promise} A Promise that resolves to the retrieved version data.
+ * @param node The node to retrieve version from.
+ * @throws Error If no node is provided or if node is not a string.
+ * @return A Promise that resolves to the retrieved version data.
  */
 function getVersion(node: string): Promise<string> {
   if (!Nodes[node]) throw new Error('Node does not exist.')
@@ -479,9 +475,9 @@ function getVersion(node: string): Promise<string> {
 /**
  * Retrieves the router planner status for a given node.
  * 
- * @param {string} The node to retrieve router planner status from.
- * @throws {Error} If no node is provided or if node is not a string.
- * @return {Promise} A Promise that resolves to the retrieved router planner status data.
+ * @param node The node to retrieve router planner status from.
+ * @throws Error If no node is provided or if node is not a string.
+ * @return A Promise that resolves to the retrieved router planner status data.
  */
 function getRouterPlannerStatus(node: string): Promise<RouterPlannerStatusData> {
   if (!Nodes[node]) throw new Error('Node does not exist.')
@@ -492,10 +488,10 @@ function getRouterPlannerStatus(node: string): Promise<RouterPlannerStatusData> 
 /**
  * Unmarks a failed address for a given node.
  * 
- * @param {string} The node to unmark failed address from.
- * @param {string} The address to unmark.
- * @throws {Error} If no node is provided or if node is not a string.
- * @returns {Promise} A Promise that resolves when the request is complete.
+ * @param node The node to unmark failed address from.
+ * @param address The address to unmark.
+ * @throws Error If no node is provided or if node is not a string.
+ * @returns A Promise that resolves when the request is complete.
  */
 function unmarkFailedAddress(node: string, address: string): Promise<void> {
   if (!Nodes[node]) throw new Error('Node does not exist.')
@@ -509,9 +505,9 @@ function unmarkFailedAddress(node: string, address: string): Promise<void> {
 /**
  * Unmarks all failed addresses for a given node.
  * 
- * @param {string} The node to unmark failed addresses from.
- * @throws {Error} If no node is provided or if node is not a string.
- * @returns {Promise} A Promise that resolves when the request is complete.
+ * @param node The node to unmark failed addresses from.
+ * @throws Error If no node is provided or if node is not a string.
+ * @returns A Promise that resolves when the request is complete.
  */
 function unmarkAllFailedAddresses(node: string): Promise<void> {
   if (!Nodes[node]) throw new Error('Node does not exist.')
@@ -522,8 +518,8 @@ function unmarkAllFailedAddresses(node: string): Promise<void> {
 /**
  * Handles raw data received from an external source.
  *
- * @param {Object} The raw data to handle.
- * @throws {Error} If data is not provided or if data is not an object.
+ * @param data The raw data from Discord to handle.
+ * @throws Error If data is not provided or if data is not an object.
  */
 function handleRaw(data: any): void {
   switch (data.t) {
