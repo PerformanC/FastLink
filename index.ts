@@ -229,24 +229,28 @@ class Player {
    * @throws {Error} If the body is not provided or is of invalid type.
    */
   update(body: UpdatePlayerOptions, noReplace?: boolean): Promise<UpdatePlayerData> | void {
-    if (body.encodedTrack && Config.queue) {
-      Players[this.guildId].queue.push(body.encodedTrack)
+    if (body.track?.encoded && Config.queue) {
+      Players[this.guildId].queue.push(body.track.encoded)
 
       if (Players[this.guildId].queue.length != 1) return;
-    } else if (body.encodedTrack !== undefined) Players[this.guildId].queue = []
+    } else if (body.track?.encoded === null) Players[this.guildId].queue = []
   
-    if (body.encodedTracks) {
+    if (body.tracks?.encodeds) {
       if (!Config.queue)
         throw new Error('Queue is disabled.')
   
       if (Players[this.guildId].queue.length == 0) {
-        Players[this.guildId].queue = body.encodedTracks
+        Players[this.guildId].queue = body.tracks.encodeds
   
         this.makeRequest(`/sessions/${Nodes[this.node].sessionId}/players/${this.guildId}`, {
-          body: { encodedTrack: body.encodedTracks[0] },
+          body: {
+            track: {
+              encoded: body.tracks.encodeds[0]
+            }
+          },
           method: 'PATCH'
         })
-      } else body.encodedTracks.forEach((track: string) => Players[this.guildId].queue.push(track))
+      } else Players[this.guildId].queue.push(...body.tracks.encodeds)
   
       return;
     }
@@ -315,7 +319,11 @@ class Player {
     Players[this.guildId].queue.shift()
   
     this.makeRequest(`/sessions/${Nodes[this.node].sessionId}/players/${this.guildId}`, {
-      body: { encodedTrack: Players[this.guildId].queue[0] },
+      body: {
+        track: {
+          encoded: Players[this.guildId].queue[0]
+        }
+      },
       method: 'PATCH'
     })
   
@@ -362,7 +370,7 @@ class Player {
         Authorization: Nodes[this.node].password,
         'user-id': Config.botId,
         'guild-id': this.guildId,
-        'Client-Name': 'FastLink/2.3.5'
+        'Client-Name': 'FastLink/2.3.6'
       }
     })
 

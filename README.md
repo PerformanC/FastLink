@@ -50,18 +50,20 @@ const client = new Discord.Client({
   ]
 })
 
+const prefix = '!'
+const botId = 'Your bot Id here'
+const token = 'Your bot token here'
+
 const events = FastLink.node.connectNodes([{
   hostname: '127.0.0.1',
   secure: false,
   password: 'youshallnotpass',
   port: 2333
 }], {
-  botId: 'Your bot Id here',
+  botId,
   shards: 1,
   queue: true
 })
-
-const prefix = '!'
 
 events.on('debug', console.log)
 
@@ -159,7 +161,11 @@ client.on('messageCreate', async (message: Discord.Message): Promise<void> => {
     }
 
     if (track.loadType == 'playlist') {
-      player.update({ encodedTracks: track.data.tracks.map((track) => track.encoded) })
+      player.update({
+        tracks: {
+          encodeds: track.data.tracks.map((track) => track.encoded)
+        }
+      })
 
       message.channel.send(`Added ${track.data.tracks.length} songs to the queue, and playing ${track.data.tracks[0].info.title}.`)
 
@@ -167,7 +173,11 @@ client.on('messageCreate', async (message: Discord.Message): Promise<void> => {
     }
 
     if (track.loadType == 'track' || track.loadType == 'short') {
-      player.update({ encodedTrack: track.data.encoded, })
+      player.update({
+        track: {
+          encoded: track.data.encoded
+        }
+      })
 
       message.channel.send(`Playing ${track.data.info.title} from ${track.data.info.sourceName} from url search.`)
 
@@ -175,7 +185,11 @@ client.on('messageCreate', async (message: Discord.Message): Promise<void> => {
     }
 
     if (track.loadType == 'search') {
-      player.update({ encodedTrack: track.data[0].encoded })
+      player.update({
+        track: {
+          encoded: track.data[0].encoded
+        }
+      })
 
       message.channel.send(`Playing ${track.data[0].info.title} from ${track.data[0].info.sourceName} from search.`)
 
@@ -259,7 +273,11 @@ client.on('messageCreate', async (message: Discord.Message): Promise<void> => {
       return;
     }
 
-    player.update({ encodedTrack: null })
+    player.update({
+      track: {
+        encoded: null
+      }
+    })
 
     message.channel.send('Stopped the player.')
 
@@ -269,7 +287,7 @@ client.on('messageCreate', async (message: Discord.Message): Promise<void> => {
 
 client.on('raw', (data) => FastLink.other.handleRaw(data))
 
-client.login('Your bot token here')
+client.login(token)
 ```
 
 ## Documentation

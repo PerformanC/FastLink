@@ -220,7 +220,10 @@ type VoiceData = {
 }
 
 export type UpdatePlayerData = {
-  encodedTrack?: string | null,
+  track?: {
+    encoded?: string | null,
+    userData?: any
+  }
   identifier?: string,
   position?: number,
   endTime?: number | null,
@@ -231,7 +234,10 @@ export type UpdatePlayerData = {
 }
 
 export type UpdatePlayerOptions = UpdatePlayerData & {
-  encodedTracks?: Array<string> | null,
+  tracks?: {
+    encodeds?: Array<string> | null,
+    userData?: any
+  }
 }
 
 export type PlayersData = {
