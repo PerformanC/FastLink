@@ -154,8 +154,12 @@ client.on('messageCreate', async (message) => {
       return;
     }
 
-    if (track.loadType == 'playlist') {
-      player.update({ encodedTracks: track.data.tracks.map((track) => track.encoded) })
+    if ([ 'playlist', 'album', 'station' ].includes(track.loadType)) {
+      player.update({
+        tracks: {
+          encodeds: track.data.tracks.map((track) => track.encoded)
+        }
+      })
 
       message.channel.send(`Added ${track.data.tracks.length} songs to the queue, and playing ${track.data.tracks[0].info.title}.`)
 
@@ -163,7 +167,11 @@ client.on('messageCreate', async (message) => {
     }
 
     if (track.loadType == 'track' || track.loadType == 'short') {
-      player.update({ encodedTrack: track.data.encoded, })
+      player.update({ 
+        track: {
+          encoded: track.data.encoded
+        }
+      })
 
       message.channel.send(`Playing ${track.data.info.title} from ${track.data.info.sourceName} from url search.`)
 
@@ -171,7 +179,11 @@ client.on('messageCreate', async (message) => {
     }
 
     if (track.loadType == 'search') {
-      player.update({ encodedTrack: track.data[0].encoded })
+      player.update({
+        track: {
+          encoded: track.data[0].encoded
+        }
+      })
 
       message.channel.send(`Playing ${track.data[0].info.title} from ${track.data[0].info.sourceName} from search.`)
 
@@ -255,7 +267,11 @@ client.on('messageCreate', async (message) => {
       return;
     }
 
-    player.update({ encodedTrack: null })
+    player.update({
+      track: {
+        encoded: null
+      }
+    })
 
     message.channel.send('Stopped the player.')
 
