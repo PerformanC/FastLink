@@ -9,9 +9,16 @@ import { URL } from 'node:url'
 function parseFrameHeader(buffer) {
   let startIndex = 2
 
-  const opcode = buffer[0] & 0b00001111
-  const fin = (buffer[0] & 0b10000000) == 0b10000000
-  let payloadLength = buffer[1] & 0b01111111
+  const opcode = buffer[0] & 15
+  const fin = (buffer[0] & 128) == 128
+  let payloadLength = buffer[1] & 127
+
+  let mask = null
+  if ((buffer[1] & 128) == 128) {
+    mask = buffer.subarray(startIndex, startIndex + 4)
+
+    startIndex += 4
+  }
 
   if (payloadLength == 126) {
     startIndex += 2
@@ -24,6 +31,12 @@ function parseFrameHeader(buffer) {
   }
 
   buffer = buffer.subarray(startIndex, startIndex + payloadLength)
+
+  if (mask) {
+    for (let i = 0; i < payloadLength; i++) {
+      buffer[i] = buffer[i] ^ mask[i & 3]
+    }
+  }
 
   return {
     opcode,
@@ -128,7 +141,7 @@ class WebSocket extends EventEmitter {
             break
           }
           case 0x2: {
-            throw new Error('Binary data is not supported.')
+            this.emit('message', headers.buffer)
 
             break
           }
@@ -197,7 +210,7 @@ class WebSocket extends EventEmitter {
     }
 
     const header = Buffer.allocUnsafe(payloadStartIndex)
-    header[0] = options.fin ? options.opcode | 0x80 : options.opcode
+    header[0] = options.fin ? options.opcode | 128 : options.opcode
     header[1] = payloadLength
 
     if (payloadLength == 126) {
@@ -208,7 +221,7 @@ class WebSocket extends EventEmitter {
     }
 
     if (options.mask) {
-      header[1] |= 0x80
+      header[1] |= 128
       header[payloadStartIndex - 4] = mask[0]
       header[payloadStartIndex - 3] = mask[1]
       header[payloadStartIndex - 2] = mask[2]
