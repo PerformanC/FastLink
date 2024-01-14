@@ -1,4 +1,4 @@
-import { TrackData } from './src/events/track/trackTypes'
+import { TrackData } from './src/events/track/trackTypes.js'
 
 export type ConfigData = {
   botId?: string,

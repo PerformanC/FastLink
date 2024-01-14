@@ -1,6 +1,7 @@
-import { InternalNodeData } from '../../indexTypes'
-import { StatsData } from './statsTypes'
 import Event from 'node:events'
+
+import { InternalNodeData } from '../../indexTypes.js'
+import { StatsData } from './statsTypes.js'
 
 function stats(Event: Event, payload: any, node: string, Nodes: InternalNodeData): InternalNodeData {
   Event.emit('debug', `[FastLink] Received stats from ${node}`)

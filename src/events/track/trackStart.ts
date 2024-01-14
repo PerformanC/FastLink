@@ -1,6 +1,7 @@
-import { ConfigData, InternalNodeData, InternalPlayerData } from '../../../indexTypes'
-import { PartialTrackData } from './trackTypes'
 import Event from 'node:events'
+
+import { ConfigData, InternalNodeData, InternalPlayerData } from '../../../indexTypes.js'
+import { PartialTrackData } from './trackTypes.js'
 
 function trackStart(Event: Event, payload: any, node: string, config: ConfigData, Nodes: InternalNodeData, Players: InternalPlayerData): InternalPlayerData {
   Event.emit('debug', `[FastLink] ${node} has started a track`)

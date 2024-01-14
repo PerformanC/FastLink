@@ -6,7 +6,7 @@ import crypto from 'node:crypto'
 import EventEmitter from 'node:events'
 import { URL } from 'node:url'
 
-import { WebSocketOptions, FrameOptions } from './wsTypes'
+import { WebSocketOptions, FrameOptions } from './wsTypes.js'
 
 function parseFrameHeader(buffer: Buffer): FrameOptions {
   let startIndex = 2

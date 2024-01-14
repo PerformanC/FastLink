@@ -1,6 +1,7 @@
-import { InternalNodeData } from '../../indexTypes'
-import { ReadyData } from './readyTypes'
 import Event from 'node:events'
+
+import { InternalNodeData } from '../../indexTypes.js'
+import { ReadyData } from './readyTypes.js'
 
 function ready(Event: Event, payload: any, node: string, Nodes: InternalNodeData): InternalNodeData {
   Nodes[node].sessionId = payload.sessionId

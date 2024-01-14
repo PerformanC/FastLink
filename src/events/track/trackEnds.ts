@@ -1,8 +1,8 @@
-import utils from '../../utils.js'
-
-import { ConfigData, InternalNodeData, InternalPlayerData } from '../../../indexTypes'
-import { TrackEndData, TrackExceptionData, TrackStuckData } from './trackEndsTypes'
 import Event from 'node:events'
+
+import utils from '../../utils.js'
+import { ConfigData, InternalNodeData, InternalPlayerData } from '../../../indexTypes.js'
+import { TrackEndData, TrackExceptionData, TrackStuckData } from './trackEndsTypes.js'
 
 function trackEnd(Event: Event, payload: any, node: string, config: ConfigData, Nodes: InternalNodeData, Players: InternalPlayerData): InternalPlayerData {
   const name = payload.type === 'TrackEndEvent' ? 'trackEnd' : (payload.type === 'TrackExceptionEvent' ? 'trackException' : 'trackStuck')
