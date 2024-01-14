@@ -47,7 +47,7 @@ async function makeNodeRequest(Nodes: InternalNodeData, node: string, endpoint: 
       connection.on('data', (chunk) => (data += chunk))
 
       connection.on('end', () => {
-        if (headers['content-type'] == 'application/json')
+        if (headers['content-type'] === 'application/json')
           resolve(JSON.parse(data))
         else
           resolve(data)

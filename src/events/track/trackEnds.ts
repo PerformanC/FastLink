@@ -5,7 +5,7 @@ import { TrackEndData, TrackExceptionData, TrackStuckData } from './trackEndsTyp
 import Event from 'node:events'
 
 function trackEnd(Event: Event, payload: any, node: string, config: ConfigData, Nodes: InternalNodeData, Players: InternalPlayerData): InternalPlayerData {
-  const name = payload.type == 'TrackEndEvent' ? 'trackEnd' : (payload.type == 'TrackExceptionEvent' ? 'trackException' : 'trackStuck')
+  const name = payload.type === 'TrackEndEvent' ? 'trackEnd' : (payload.type === 'TrackExceptionEvent' ? 'trackException' : 'trackStuck')
 
   Event.emit('debug', `[FastLink] ${node} has received a ${name}`)
 
@@ -17,10 +17,10 @@ function trackEnd(Event: Event, payload: any, node: string, config: ConfigData, 
     return Players
   }
 
-  if (name != 'trackException' && config.queue && ['finished', 'loadFailed'].includes(payload.reason)) {
+  if (name !== 'trackException' && config.queue && ['finished', 'loadFailed'].includes(payload.reason)) {
     player.queue.shift()
 
-    if (player.queue.length != 0) {
+    if (player.queue.length !== 0) {
       utils.makeNodeRequest(Nodes, node, `/v4/sessions/${Nodes[node].sessionId}/players/${payload.guildId}`, {
         body: {
           encodedTrack: player.queue[0]

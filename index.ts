@@ -103,13 +103,13 @@ function connectNodes(nodes: Array<NodeOptions>, config: ConfigOptions) {
  * @returns The boolean if any node is connected or not.
  */
 function anyNodeAvailable(): boolean {
-  return Object.values(Nodes).filter((node: InternalNodeData) => node?.connected).length == 0 ? false : true
+  return Object.values(Nodes).filter((node: InternalNodeData) => node?.connected).length === 0 ? false : true
 }
 
 function getRecommendedNode(): InternalNodeData {
   const nodes = Object.values(Nodes).filter((node: InternalNodeData) => node.connected)
 
-  if (nodes.length == 0) throw new Error('No node connected.')
+  if (nodes.length === 0) throw new Error('No node connected.')
   
   return nodes.sort((a, b) => (a.stats.systemLoad / a.stats.cores) * 100 - (b.stats.systemLoad / b.stats.cores) * 100)[0] as InternalNodeData
 }
@@ -152,7 +152,8 @@ class Player {
       playing: false,
       paused: false,
       volume: null,
-      node: node,
+      node,
+      loop: null
     }
 
     if (Config.queue) Players[this.guildId].queue = []
@@ -230,7 +231,7 @@ class Player {
     if (body.track?.encoded && Config.queue) {
       Players[this.guildId].queue.push(body.track.encoded)
 
-      if (Players[this.guildId].queue.length == 1 && Object.keys(body).length == 1 && !body.track?.userData) return;
+      if (Players[this.guildId].queue.length === 1 && Object.keys(body).length === 1 && !body.track?.userData) return;
 
       delete body.track.encoded
     } else if (body.track?.encoded === null) Players[this.guildId].queue = []
@@ -239,7 +240,7 @@ class Player {
       if (!Config.queue)
         throw new Error('Queue is disabled.')
   
-      if (Players[this.guildId].queue.length == 0) {
+      if (Players[this.guildId].queue.length === 0) {
         Players[this.guildId].queue = body.tracks.encodeds
   
         this.makeRequest(`/sessions/${Nodes[this.node].sessionId}/players/${this.guildId}`, {
@@ -310,11 +311,11 @@ class Player {
    * @return The queue of tracks, or null if there is no queue.
    * @throws Error If the queue is disabled
    */
-  skipTrack(): Array<string> | null {
+  skipTrack(): Array<string> | false {
     if (!Config.queue) throw new Error('Queue is disabled.')
 
-    if (Players[this.guildId].queue.length == 1)
-      return null
+    if (Players[this.guildId].queue.length === 1)
+      return false
 
     Players[this.guildId].queue.shift()
   
@@ -327,6 +328,40 @@ class Player {
       method: 'PATCH'
     })
   
+    return Players[this.guildId].queue
+  }
+
+  /**
+   * Sets the loop state of the player.
+   *
+   * @param loop The loop state to set.
+   * @return The loop state of the player.
+   */
+  loop(loop: 'track' | 'queue' | null): 'track' | 'queue' | null {
+    if (!Config.queue) throw new Error('Queue is disabled.')
+
+    return Players[this.guildId].loop = loop
+  }
+
+  /**
+   * Shuffles the queue of tracks.
+   * 
+   * @return The shuffled queue of tracks, or false if there are less than 3 tracks in the queue.
+   * @throws Error If the queue is disabled.
+   */
+  shuffle(): Array<string> | false {
+    if (!Config.queue) throw new Error('Queue is disabled.')
+
+    if (Players[this.guildId].queue.length < 3)
+      return false
+
+    Players[this.guildId].queue.forEach((_, i) => {
+      const j = Math.floor(Math.random() * (i + 1))
+      const temp = Players[this.guildId].queue[i]
+      Players[this.guildId].queue[i] = Players[this.guildId].queue[j]
+      Players[this.guildId].queue[j] = temp
+    })
+
     return Players[this.guildId].queue
   }
 
@@ -381,11 +416,11 @@ class Player {
     this.guildWs.on('message', (data) => {
       data = JSON.parse(data)
 
-      if (data.type == 'startSpeakingEvent') {
+      if (data.type === 'startSpeakingEvent') {
         voiceEvents.emit('startSpeaking', data.data)
       }
 
-      if (data.type == 'endSpeakingEvent') {
+      if (data.type === 'endSpeakingEvent') {
         voiceEvents.emit('endSpeaking', data.data)
       }
     })
@@ -547,7 +582,7 @@ function handleRaw(data: any): void {
     }
 
     case 'VOICE_STATE_UPDATE': {
-      if (data.d.member.user.id != Config.botId) return;
+      if (data.d.member.user.id !== Config.botId) return;
 
       vcsData[data.d.guild_id] = {
         ...vcsData[data.d.guild_id],
@@ -573,7 +608,7 @@ function handleRaw(data: any): void {
 
     case 'GUILD_CREATE': {
       data.d.voice_states.forEach((state: any) => {
-        if (state.user_id != Config.botId) return;
+        if (state.user_id !== Config.botId) return;
 
         vcsData[data.d.id] = {
           ...vcsData[data.d.id],

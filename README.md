@@ -69,10 +69,10 @@ client.on('messageCreate', async (message: Discord.Message): Promise<void> => {
   const commandName = message.content.split(' ')[0].toLowerCase().substring(prefix.length)
   const args = message.content.split(' ').slice(1).join(' ')
 
-  if (commandName == 'decodetrack') {
+  if (commandName === 'decodetrack') {
     const player = new FastLink.player.Player(message.guild.id)
 
-    if (player.playerCreated() == false) {
+    if (player.playerCreated() === false) {
       message.channel.send('No player found.')
 
       return;
@@ -85,10 +85,10 @@ client.on('messageCreate', async (message: Discord.Message): Promise<void> => {
     return;
   }
 
-  if (commandName == 'record') {
+  if (commandName === 'record') {
     const player = new FastLink.player.Player(message.guild.id)
 
-    if (player.playerCreated() == false) {
+    if (player.playerCreated() === false) {
       message.channel.send('No player found.')
 
       return;
@@ -107,10 +107,10 @@ client.on('messageCreate', async (message: Discord.Message): Promise<void> => {
     message.channel.send('Started recording. Be aware: This will record everything you say in the voice channel, even if the bot is deaf. Server deaf the bot if you don\'t want to be recorded by any chances.')
   }
 
-  if (commandName == 'stoprecord') {
+  if (commandName === 'stoprecord') {
     const player = new FastLink.player.Player(message.guild.id)
 
-    if (player.playerCreated() == false) {
+    if (player.playerCreated() === false) {
       message.channel.send('No player found.')
 
       return;
@@ -121,7 +121,7 @@ client.on('messageCreate', async (message: Discord.Message): Promise<void> => {
     message.channel.send('Stopped recording.')
   }
 
-  if (commandName == 'play') {
+  if (commandName === 'play') {
     if (!message.member.voice.channel) {
       message.channel.send('You must be in a voice channel.')
 
@@ -136,7 +136,7 @@ client.on('messageCreate', async (message: Discord.Message): Promise<void> => {
 
     const player = new FastLink.player.Player(message.guild.id)
 
-    if (player.playerCreated() == false) player.createPlayer()
+    if (player.playerCreated() === false) player.createPlayer()
 
     player.connect(message.member.voice.channel.id.toString(), { mute: false, deaf: true }, (guildId, payload) => {
       client.guilds.cache.get(guildId).shard.send(payload)
@@ -144,13 +144,13 @@ client.on('messageCreate', async (message: Discord.Message): Promise<void> => {
 
     const track = await player.loadTrack((args.startsWith('https://') ? '' : 'ytsearch:') + args)
 
-    if (track.loadType == 'error') {
+    if (track.loadType === 'error') {
       message.channel.send('Something went wrong. ' + track.data.message)
 
       return;
     }
 
-    if (track.loadType == 'empty') {
+    if (track.loadType === 'empty') {
       message.channel.send('No matches found.')
 
       return;
@@ -180,7 +180,7 @@ client.on('messageCreate', async (message: Discord.Message): Promise<void> => {
       return;
     }
 
-    if (track.loadType == 'search') {
+    if (track.loadType === 'search') {
       player.update({
         track: {
           encoded: track.data[0].encoded
@@ -193,10 +193,10 @@ client.on('messageCreate', async (message: Discord.Message): Promise<void> => {
     }
   }
 
-  if (commandName == 'volume') {
+  if (commandName === 'volume') {
     const player = new FastLink.player.Player(message.guild.id)
 
-    if (player.playerCreated() == false) {
+    if (player.playerCreated() === false) {
       message.channel.send('No player found.')
 
       return;
@@ -211,10 +211,10 @@ client.on('messageCreate', async (message: Discord.Message): Promise<void> => {
     return;
   }
 
-  if (commandName == 'pause') {
+  if (commandName === 'pause') {
     const player = new FastLink.player.Player(message.guild.id)
 
-    if (player.playerCreated() == false) {
+    if (player.playerCreated() === false) {
       message.channel.send('No player found.')
 
       return;
@@ -227,10 +227,10 @@ client.on('messageCreate', async (message: Discord.Message): Promise<void> => {
     return;
   }
 
-  if (commandName == 'resume') {
+  if (commandName === 'resume') {
     const player = new FastLink.player.Player(message.guild.id)
 
-    if (player.playerCreated() == false) {
+    if (player.playerCreated() === false) {
       message.channel.send('No player found.')
 
       return;
@@ -243,10 +243,10 @@ client.on('messageCreate', async (message: Discord.Message): Promise<void> => {
     return;
   }
 
-  if (commandName == 'skip') {
+  if (commandName === 'skip') {
     const player = new FastLink.player.Player(message.guild.id)
 
-    if (player.playerCreated() == false) {
+    if (player.playerCreated() === false) {
       message.channel.send('No player found.')
 
       return;
@@ -260,10 +260,10 @@ client.on('messageCreate', async (message: Discord.Message): Promise<void> => {
     return;
   }
 
-  if (commandName == 'stop') {
+  if (commandName === 'stop') {
     const player = new FastLink.player.Player(message.guild.id)
 
-    if (player.playerCreated() == false) {
+    if (player.playerCreated() === false) {
       message.channel.send('No player found.')
 
       return;
