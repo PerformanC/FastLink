@@ -1,6 +1,7 @@
-import { InternalNodeData, InternalPlayerData } from '../../../indexTypes'
-import { WebsocketClosedData } from './websocketClosedTypes'
 import Event from 'node:events'
+
+import { InternalNodeData, InternalPlayerData } from '../../../indexTypes.js'
+import { WebsocketClosedData } from './websocketClosedTypes.js'
 
 function websocketClosed(Event: Event, payload: any, node: string, Nodes: InternalNodeData, Players: InternalPlayerData): InternalPlayerData {
   Event.emit('debug', `[FastLink] ${node} has received a WebsocketClosed`)
