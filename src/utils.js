@@ -43,7 +43,7 @@ async function makeNodeRequest(Nodes, node, endpoint, options) {
       res.on('data', (chunk) => (data += chunk))
 
       res.on('end', () => {
-        if (headers['content-type'] == 'application/json')
+        if (headers['content-type'] === 'application/json')
           resolve(JSON.parse(data))
         else
           resolve(data)

@@ -70,7 +70,7 @@ client.on('messageCreate', async (message) => {
   if (commandName == 'decodetrack') {
     const player = new FastLink.player.Player(message.guild.id)
 
-    if (player.playerCreated() == false) {
+    if (player.playerCreated() === false) {
       message.channel.send('No player found.')
 
       return;
@@ -134,7 +134,7 @@ client.on('messageCreate', async (message) => {
 
     const player = new FastLink.player.Player(message.guild.id)
 
-    if (player.playerCreated() == false) player.createPlayer()
+    if (player.playerCreated() === false) player.createPlayer()
 
     player.connect(message.member.voice.channel.id.toString(), { mute: false, deaf: true }, (guildId, payload) => {
       client.guilds.cache.get(guildId).shard.send(payload)
@@ -142,13 +142,13 @@ client.on('messageCreate', async (message) => {
 
     const track = await player.loadTrack((args.startsWith('https://') ? '' : 'ytsearch:') + args)
 
-    if (track.loadType == 'error') {
+    if (track.loadType === 'error') {
       message.channel.send('Something went wrong. ' + track.data.message)
 
       return;
     }
 
-    if (track.loadType == 'empty') {
+    if (track.loadType === 'empty') {
       message.channel.send('No matches found.')
 
       return;
@@ -194,7 +194,7 @@ client.on('messageCreate', async (message) => {
   if (commandName == 'volume') {
     const player = new FastLink.player.Player(message.guild.id)
 
-    if (player.playerCreated() == false) {
+    if (player.playerCreated() === false) {
       message.channel.send('No player found.')
 
       return;
@@ -212,7 +212,7 @@ client.on('messageCreate', async (message) => {
   if (commandName == 'pause') {
     const player = new FastLink.player.Player(message.guild.id)
 
-    if (player.playerCreated() == false) {
+    if (player.playerCreated() === false) {
       message.channel.send('No player found.')
 
       return;
@@ -228,7 +228,7 @@ client.on('messageCreate', async (message) => {
   if (commandName == 'resume') {
     const player = new FastLink.player.Player(message.guild.id)
 
-    if (player.playerCreated() == false) {
+    if (player.playerCreated() === false) {
       message.channel.send('No player found.')
 
       return;
@@ -244,7 +244,7 @@ client.on('messageCreate', async (message) => {
   if (commandName == 'skip') {
     const player = new FastLink.player.Player(message.guild.id)
 
-    if (player.playerCreated() == false) {
+    if (player.playerCreated() === false) {
       message.channel.send('No player found.')
 
       return;
@@ -261,7 +261,7 @@ client.on('messageCreate', async (message) => {
   if (commandName == 'stop') {
     const player = new FastLink.player.Player(message.guild.id)
 
-    if (player.playerCreated() == false) {
+    if (player.playerCreated() === false) {
       message.channel.send('No player found.')
 
       return;
