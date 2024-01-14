@@ -73,7 +73,7 @@ async function close(Event: Event, ws: PWSL, node: NodeOptions, config: ConfigDa
   delete Nodes[node.hostname]
 
   Object.keys(Players).forEach((key) => {
-    if (Players[key].node == node.hostname)
+    if (Players[key].node === node.hostname)
       delete Players[key]
   })
 

@@ -12,13 +12,13 @@ function parseFrameHeader(buffer: Buffer): FrameOptions {
   let startIndex = 2
 
   const opcode = buffer[0] & 0b00001111
-  const fin = (buffer[0] & 0b10000000) == 0b10000000
+  const fin = (buffer[0] & 0b10000000) === 0b10000000
   let payloadLength = buffer[1] & 0b01111111
 
-  if (payloadLength == 126) {
+  if (payloadLength === 126) {
     startIndex += 2
     payloadLength = buffer.readUInt16BE(2)
-  } else if (payloadLength == 127) {
+  } else if (payloadLength === 127) {
     const buf = buffer.subarray(startIndex, startIndex + 8)
 
     payloadLength = buf.readUInt32BE(0) * Math.pow(2, 32) + buf.readUInt32BE(4)
@@ -56,7 +56,7 @@ class WebSocket extends EventEmitter {
 
   connect(): void {
     const parsedUrl: URL = new URL(this.url)
-    const isSecure: Boolean = parsedUrl.protocol == 'wss:'
+    const isSecure: Boolean = parsedUrl.protocol === 'wss:'
     const agent: typeof https | typeof http = isSecure ? https : http
     const key = crypto.randomBytes(16).toString('base64')
 
@@ -97,9 +97,9 @@ class WebSocket extends EventEmitter {
       socket.setNoDelay()
       socket.setKeepAlive(true)
 
-      if (head.length != 0) socket.unshift(head)
+      if (head.length !== 0) socket.unshift(head)
 
-      if (res.headers.upgrade.toLowerCase() != 'websocket') {
+      if (res.headers.upgrade.toLowerCase() !== 'websocket') {
         socket.destroy()
 
         return;
@@ -109,7 +109,7 @@ class WebSocket extends EventEmitter {
         .update(key + '258EAFA5-E914-47DA-95CA-C5AB0DC85B11')
         .digest('base64')
 
-      if (res.headers['sec-websocket-accept'] != digest) {
+      if (res.headers['sec-websocket-accept'] !== digest) {
         socket.destroy()
 
         return;
@@ -139,7 +139,7 @@ class WebSocket extends EventEmitter {
             throw new Error('Binary data is not supported.')
           }
           case 0x8: {
-            if (headers.buffer.length == 0) {
+            if (headers.buffer.length === 0) {
               this.emit('close', 1006, '')
             } else {
               const code = headers.buffer.readUInt16BE(0)
@@ -188,7 +188,7 @@ class WebSocket extends EventEmitter {
     if (options.mask) {
       mask = Buffer.allocUnsafe(4)
 
-      while ((mask[0] | mask[1] | mask[2] | mask[3]) == 0)
+      while ((mask[0] | mask[1] | mask[2] | mask[3]) === 0)
         crypto.randomFillSync(mask, 0, 4)
 
       payloadStartIndex += 4
@@ -206,9 +206,9 @@ class WebSocket extends EventEmitter {
     header[0] = options.fin ? options.opcode | 0x80 : options.opcode
     header[1] = payloadLength
 
-    if (payloadLength == 126) {
+    if (payloadLength === 126) {
       header.writeUInt16BE(options.len, 2)
-    } else if (payloadLength == 127) {
+    } else if (payloadLength === 127) {
       header[2] = header[3] = 0
       header.writeUIntBE(options.len, 4, 6)
     }

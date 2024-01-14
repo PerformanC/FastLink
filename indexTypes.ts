@@ -44,7 +44,8 @@ export type PlayerData = {
   volume: number,
   node: string,
   queue?: Array<string>,
-  track?: string
+  track?: string,
+  loop: 'track' | 'queue' | null,
 }
 
 export type InternalPlayerData = {
