@@ -67,7 +67,7 @@ client.on('messageCreate', async (message) => {
   const commandName = message.content.split(' ')[0].toLowerCase().substring(prefix.length)
   const args = message.content.split(' ').slice(1).join(' ')
 
-  if (commandName == 'decodetrack') {
+  if (commandName === 'decodetrack') {
     const player = new FastLink.player.Player(message.guild.id)
 
     if (player.playerCreated() === false) {
@@ -83,10 +83,10 @@ client.on('messageCreate', async (message) => {
     return;
   }
 
-  if (commandName == 'record') {
+  if (commandName === 'record') {
     const player = new FastLink.player.Player(message.guild.id)
 
-    if (player.playerCreated() == false) {
+    if (player.playerCreated() === false) {
       message.channel.send('No player found.')
 
       return;
@@ -105,10 +105,10 @@ client.on('messageCreate', async (message) => {
     message.channel.send('Started recording. Be aware: This will record everything you say in the voice channel, even if the bot is deaf. Server deaf the bot if you don\'t want to be recorded by any chances.')
   }
 
-  if (commandName == 'stoprecord') {
+  if (commandName === 'stoprecord') {
     const player = new FastLink.player.Player(message.guild.id)
 
-    if (player.playerCreated() == false) {
+    if (player.playerCreated() === false) {
       message.channel.send('No player found.')
 
       return;
@@ -119,7 +119,7 @@ client.on('messageCreate', async (message) => {
     message.channel.send('Stopped recording.')
   }
 
-  if (commandName == 'play') {
+  if (commandName === 'play') {
     if (!message.member.voice.channel) {
       message.channel.send('You must be in a voice channel.')
 
@@ -178,7 +178,7 @@ client.on('messageCreate', async (message) => {
       return;
     }
 
-    if (track.loadType == 'search') {
+    if (track.loadType === 'search') {
       player.update({
         track: {
           encoded: track.data[0].encoded
@@ -191,7 +191,7 @@ client.on('messageCreate', async (message) => {
     }
   }
 
-  if (commandName == 'volume') {
+  if (commandName === 'volume') {
     const player = new FastLink.player.Player(message.guild.id)
 
     if (player.playerCreated() === false) {
@@ -209,7 +209,7 @@ client.on('messageCreate', async (message) => {
     return;
   }
 
-  if (commandName == 'pause') {
+  if (commandName === 'pause') {
     const player = new FastLink.player.Player(message.guild.id)
 
     if (player.playerCreated() === false) {
@@ -225,7 +225,7 @@ client.on('messageCreate', async (message) => {
     return;
   }
 
-  if (commandName == 'resume') {
+  if (commandName === 'resume') {
     const player = new FastLink.player.Player(message.guild.id)
 
     if (player.playerCreated() === false) {
@@ -241,7 +241,7 @@ client.on('messageCreate', async (message) => {
     return;
   }
 
-  if (commandName == 'skip') {
+  if (commandName === 'skip') {
     const player = new FastLink.player.Player(message.guild.id)
 
     if (player.playerCreated() === false) {
@@ -258,7 +258,7 @@ client.on('messageCreate', async (message) => {
     return;
   }
 
-  if (commandName == 'stop') {
+  if (commandName === 'stop') {
     const player = new FastLink.player.Player(message.guild.id)
 
     if (player.playerCreated() === false) {

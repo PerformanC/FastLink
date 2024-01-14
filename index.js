@@ -348,27 +348,34 @@ class Player {
     return Players[this.guildId].queue
   }
 
-  loop() {
+  /**
+   * Sets the loop state of the player.
+   *
+   * @param loop The loop state to set.
+   * @return The loop state of the player.
+   */
+  loop(loop) {
     if (!Config.queue) throw new Error('Queue is disabled.')
 
-    let loop = null
-    switch (Players[this.guildId].loop){
-      case 'track': loop = 'track'; break;
-      case 'queue': loop = 'queue'; break;
-      case 'off': loop = 'off'; break;
-      default: throw new Error('Invalid option. Available options: track, queue, off')
-    }
+    if (![ 'track', 'queue', null ].includes(loop))
+      throw new Error('Loop must be track, queue, or null.')
 
     return Players[this.guildId].loop = loop
   }
 
+  /**
+   * Shuffles the queue of tracks.
+   * 
+   * @return The shuffled queue of tracks, or false if there are less than 3 tracks in the queue.
+   * @throws Error If the queue is disabled.
+   */
   shuffle() {
     if (!Config.queue) throw new Error('Queue is disabled.')
 
     if (Players[this.guildId].queue.length < 3)
       return false
 
-    PLayers[this.guild].queue.forEach((_, i) => {
+    Players[this.guildId].queue.forEach((_, i) => {
       const j = Math.floor(Math.random() * (i + 1))
       const temp = Players[this.guildId].queue[i]
       Players[this.guildId].queue[i] = Players[this.guildId].queue[j]
