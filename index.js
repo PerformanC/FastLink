@@ -129,7 +129,6 @@ class Player {
 
     this.guildId = guildId
     this.node = Players[this.guildId]?.node
-    this.guildWs = null
   }
 
   /**
@@ -148,7 +147,9 @@ class Player {
       playing: false,
       paused: false,
       volume: null,
-      node
+      node,
+      loop: null,
+      guildWs: null
     }
 
     if (Config.queue) Players[this.guildId].queue = []
@@ -429,7 +430,7 @@ class Player {
   listen() {
     const voiceEvents = new event()
 
-    this.guildWs = new Pws(`ws://${Nodes[this.node].hostname}${Nodes[this.node].port ? `:${Nodes[this.node].port}` : ''}/connection/data`, {
+    Players[this.guildId].guildWs = new Pws(`ws://${Nodes[this.node].hostname}${Nodes[this.node].port ? `:${Nodes[this.node].port}` : ''}/connection/data`, {
       headers: {
         Authorization: Nodes[this.node].password,
         'user-id': Config.botId,
@@ -437,12 +438,10 @@ class Player {
         'Client-Name': 'FastLink/2.4.0'
       }
     })
-
-    this.guildWs.on('open', () => {
+    .on('open', () => {
       voiceEvents.emit('open')
     })
-
-    this.guildWs.on('message', (data) => {
+    .on('message', (data) => {
       data = JSON.parse(data)
 
       if (data.type == 'startSpeakingEvent') {
@@ -453,12 +452,10 @@ class Player {
         voiceEvents.emit('endSpeaking', data.data)
       }
     })
-
-    this.guildWs.on('close', () => {
+    .on('close', () => {
       voiceEvents.emit('close')
     })
-
-    this.guildWs.on('error', (err) => {
+    .on('error', (err) => {
       voiceEvents.emit('error', err)
     })
 
@@ -471,10 +468,12 @@ class Player {
    * @returns The boolean if the player is connected or not.
    */
   stopListen() {
-    if (!this.guildWs) return false
+    const guildWs = Players[this.guildId].guildWs
 
-    this.guildWs.close()
-    this.guildWs = null
+    if (!guildWs) return false
+
+    guildWs.close()
+    Players[this.guildId].guildWs = null
 
     return true
   }
