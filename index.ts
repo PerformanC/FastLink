@@ -231,9 +231,11 @@ class Player {
     if (body.track?.encoded && Config.queue) {
       Players[this.guildId].queue.push(body.track.encoded)
 
-      if (Players[this.guildId].queue.length === 1 && Object.keys(body).length === 1 && !body.track?.userData) return;
+      if (Players[this.guildId].queue.length !== 1 && Object.keys(body).length !== 1)
+        delete body.track.encoded
 
-      delete body.track.encoded
+      if (Players[this.guildId].queue.length !== 1 && Object.keys(body).length === 1)
+        return;
     } else if (body.track?.encoded === null) Players[this.guildId].queue = []
   
     if (body.tracks?.encodeds) {
