@@ -22,7 +22,9 @@ function trackEnds(Event, payload, node, config, Nodes, Players) {
       
       utils.makeNodeRequest(Nodes, node, `/v4/sessions/${Nodes[node].sessionId}/players/${payload.guildId}`, {
         body: {
-          encodedTrack: player.queue[0]
+          track: {
+            encoded: player.queue[0]
+          }
         },
         method: 'PATCH'
       })
