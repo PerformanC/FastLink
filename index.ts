@@ -70,7 +70,7 @@ function connectNodes(nodes: Array<NodeOptions>, config: ConfigOptions) {
         Authorization: node.password,
         'Num-Shards': config.shards,
         'User-Id': config.botId,
-        'Client-Name': 'FastLink'
+        'Client-Name': 'FastLink/2.4.0'
       }
     })
 
@@ -407,7 +407,7 @@ class Player {
         Authorization: Nodes[this.node].password,
         'user-id': Config.botId,
         'guild-id': this.guildId,
-        'Client-Name': 'FastLink/2.3.6'
+        'Client-Name': 'FastLink/2.4.0'
       }
     })
 
