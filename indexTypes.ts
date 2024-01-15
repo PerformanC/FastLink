@@ -1,4 +1,5 @@
 import { TrackData } from './src/events/track/trackTypes.js'
+import PWSL from './src/ws.js'
 
 export type ConfigData = {
   botId?: string,
@@ -46,6 +47,7 @@ export type PlayerData = {
   queue?: Array<string>,
   track?: string,
   loop: 'track' | 'queue' | null,
+  guildWs: PWSL | null
 }
 
 export type InternalPlayerData = {
