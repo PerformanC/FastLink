@@ -220,11 +220,18 @@ type VoiceData = {
   sessionId: string
 }
 
+type LyricsData = {
+  startTime?: number,
+  endTime?: number,
+  text: string
+}
+
 export type LyricsSData = {
   type: 'lyricsSingle',
   data: {
     name: string,
-    data: string,
+    synced: boolean,
+    data: Array<LyricsData>,
     rtl: boolean
   }
 }
@@ -233,7 +240,8 @@ export type LyricsMData = {
   type: 'lyricsMultiple',
   data: Array<{
     name: string,
-    data: string,
+    synced: boolean,
+    data: Array<LyricsData>,
     rtl: boolean
   }>
 }
