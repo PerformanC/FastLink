@@ -54,6 +54,7 @@ class WebSocket extends EventEmitter {
     this.options = options
     this.socket = null
     this.cachedData = []
+    this.continuedData = -1
 
     this.connect()
 
@@ -128,20 +129,23 @@ class WebSocket extends EventEmitter {
             this.cachedData.push(headers.buffer)
 
             if (headers.fin) {
-              this.emit('message', Buffer.concat(this.cachedData).toString())
+              this.emit('message', (this.continuedData === 1 ? this.cachedData.join('') : Buffer.concat(this.cachedData)))
 
               this.cachedData = []
+              this.continuedData = -1
             }
 
             break
           }
-          case 0x1: {
-            this.emit('message', headers.buffer.toString())
-
-            break
-          }
+          case 0x1: 
           case 0x2: {
-            this.emit('message', headers.buffer)
+            if (!headers.fin) {
+              this.continuedData = headers.opcode
+
+              this.cachedData.push(headers.buffer)
+            } else {
+              this.emit('message', headers.opcode === 0x1 ? headers.buffer.toString('utf8') : headers.buffer)
+            }
 
             break
           }
@@ -155,7 +159,7 @@ class WebSocket extends EventEmitter {
               this.emit('close', code, reason)
             }
 
-            socket.end()
+            this.cleanup()
 
             break
           }
@@ -177,7 +181,11 @@ class WebSocket extends EventEmitter {
           this.socket.unshift(headers.buffer)
       })
 
-      socket.on('close', () => this.emit('close'))
+      socket.on('close', () => {
+        this.emit('close')
+
+        this.cleanup()
+      })
 
       this.socket = socket
 
@@ -185,6 +193,16 @@ class WebSocket extends EventEmitter {
     })
 
     request.end()
+  }
+
+  cleanup() {
+    this.socket.destroy()
+    this.socket = null
+
+    this.cachedData = []
+    this.continuedData = -1
+
+    return true
   }
 
   sendData(data, options) {
