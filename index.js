@@ -484,6 +484,32 @@ class Player {
 }
 
 /**
+ * Retrieves the player for a given guild.
+ * 
+ * @param guildId The guild to retrieve player from.
+ * @param node The node to retrieve player from.
+ * 
+ * @throws Error If no guildId is provided or if guildId is not a string.
+ * @throws Error If no node is provided or if node is not a string.
+ * @throws Error If player does not exist.
+ * 
+ * @returns A Promise that resolves to the retrieved player data.
+ */
+function getPlayer(guildId, node) {
+  if (!guildId) throw new Error('No guildId provided.')
+  if (typeof guildId !== 'string') throw new Error('GuildId must be a string.')
+
+  if (!node) throw new Error('No node provided.')
+  if (typeof node !== 'string') throw new Error('Node must be a string.')
+
+  if (!Players[guildId]) throw new Error('Player does not exist.')
+
+  if (!Nodes[node]) throw new Error('Node does not exist.')
+
+  return utils.makeNodeRequest(Nodes, node, `/v4/sessions/${Nodes[node].sessionId}/players/${guildId}`, { method: 'GET' })
+}
+
+/**
  * Retrieves the players for a given node.
  *
  * @param node The node to retrieve players from.
@@ -678,7 +704,8 @@ export default {
   },
   player: {
     Player,
-    getPlayers
+    getPlayers,
+    getPlayer
   },
   routerPlanner: {
     getRouterPlannerStatus,
