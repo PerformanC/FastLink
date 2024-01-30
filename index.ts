@@ -26,7 +26,8 @@ import {
   LyricsMData,
   UpdatePlayerOptions,
   UpdatePlayerData,
-  PlayersData,
+  ExternalPlayerData,
+  ExternalPlayersData,
   NodeInfoData,
   RequestStatsData,
   RouterPlannerStatusData
@@ -455,13 +456,33 @@ class Player {
 }
 
 /**
+ * Retrieves the player for a given guild.
+ * 
+ * @param guildId The guild to retrieve player from.
+ * @param node The node to retrieve player from.
+ * 
+ * @throws Error If no guildId is provided or if guildId is not a string.
+ * @throws Error If no node is provided or if node is not a string.
+ * @throws Error If player does not exist.
+ * 
+ * @returns A Promise that resolves to the retrieved player data.
+ */
+function getPlayer(guildId: string, node: string): Promise<ExternalPlayerData> {
+  if (!Players[guildId]) throw new Error('Player does not exist.')
+
+  if (!Nodes[node]) throw new Error('Node does not exist.')
+
+  return utils.makeNodeRequest(Nodes, node, `/v4/sessions/${Nodes[node].sessionId}/players/${guildId}`, { method: 'GET' })
+}
+
+/**
  * Retrieves the players for a given node.
  *
  * @param node The node to retrieve players from.
  * @throws Error If no node is provided or if node is not a string.
  * @return A Promise that resolves to the retrieved player data.
  */
-function getPlayers(node: string): Promise<PlayersData> {
+function getPlayers(node: string): Promise<ExternalPlayersData> {
   if (!Nodes[node]) throw new Error('Node does not exist.')
 
   return utils.makeNodeRequest(Nodes, node, '/v4/sessions', { method: 'GET' })
@@ -625,6 +646,7 @@ export default {
   },
   player: {
     Player,
+    getPlayer,
     getPlayers
   },
   routerPlanner: {

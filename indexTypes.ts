@@ -269,21 +269,23 @@ export type UpdatePlayerOptions = UpdatePlayerData & {
   }
 }
 
-export type PlayersData = {
-  [key: string]: {
-    guildId: string,
-    track: TrackData,
-    volume: number,
-    paused: boolean,
-    state: {
-      time: number,
-      position: number,
-      connected: boolean,
-      ping: number
-    },
-    voice: VoiceData,
-    filters: FiltersData
-  }
+export type ExternalPlayerData = {
+  guildId: string,
+  track: TrackData,
+  volume: number,
+  paused: boolean,
+  state: {
+    time: number,
+    position: number,
+    connected: boolean,
+    ping: number
+  },
+  voice: VoiceData,
+  filters: FiltersData
+}
+
+export type ExternalPlayersData = {
+  [key: string]: ExternalPlayerData
 }
 
 export type NodeInfoData = {
