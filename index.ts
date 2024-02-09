@@ -71,7 +71,7 @@ function connectNodes(nodes: Array<NodeOptions>, config: ConfigOptions) {
         Authorization: node.password,
         'Num-Shards': config.shards,
         'User-Id': config.botId,
-        'Client-Name': 'FastLink/2.4.0'
+        'Client-Name': 'FastLink/2.4.1 (https://github.com/PerformanC/FastLink/tree/ts)'
       }
     })
 
@@ -244,13 +244,15 @@ class Player {
   
       if (Players[this.guildId].queue.length === 0) {
         Players[this.guildId].queue = body.tracks.encodeds
+
+        delete body.tracks
   
         this.makeRequest(`/sessions/${Nodes[this.node].sessionId}/players/${this.guildId}`, {
           body: {
             ...body,
             track: {
               ...body.track,
-              encoded: body.tracks.encodeds[0]
+              encoded: Players[this.guildId].queue[0]
             }
           },
           method: 'PATCH'
@@ -407,7 +409,7 @@ class Player {
         Authorization: Nodes[this.node].password,
         'user-id': Config.botId,
         'guild-id': this.guildId,
-        'Client-Name': 'FastLink/2.4.0'
+        'Client-Name': 'FastLink/2.4.1 (https://github.com/PerformanC/FastLink/tree/ts)'
       }
     })
     .on('open', () => {
