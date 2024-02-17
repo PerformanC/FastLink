@@ -1,5 +1,3 @@
-import net from 'node:net'
-import tls from 'node:tls'
 import https from 'node:https'
 import http from 'node:http'
 import crypto from 'node:crypto'
@@ -53,8 +51,10 @@ class WebSocket extends EventEmitter {
     this.url = url
     this.options = options
     this.socket = null
-    this.cachedData = []
-    this.continuedData = -1
+    this.continueInfo = {
+      type: -1,
+      buffer: []
+    }
 
     this.connect()
 
@@ -70,20 +70,6 @@ class WebSocket extends EventEmitter {
     const request = agent.request((isSecure ? 'https://' : 'http://') + parsedUrl.hostname + parsedUrl.pathname + parsedUrl.search, {
       port: parsedUrl.port || (isSecure ? 443 : 80),
       timeout: this.options?.timeout ?? 0,
-      createConnection: (options) => {
-        if (isSecure) {
-          options.path = undefined
-
-          if (!options.servername && options.servername !== '')
-            options.servername = net.isIP(options.host) ? '' : options.host
-
-          return tls.connect(options)
-        } else {
-          options.path = options.socketPath
-
-          return net.connect(options)
-        }
-      },
       headers: {
         'Sec-WebSocket-Key': key,
         'Sec-WebSocket-Version': 13,
@@ -126,23 +112,31 @@ class WebSocket extends EventEmitter {
 
         switch (headers.opcode) {
           case 0x0: {
-            this.cachedData.push(headers.buffer)
+            this.continueInfo.buffer.push(headers.buffer)
 
             if (headers.fin) {
-              this.emit('message', (this.continuedData === 1 ? this.cachedData.join('') : Buffer.concat(this.cachedData)))
+              this.emit('message', (this.continuedData === 1 ? this.continueInfo.buffer.join('') : Buffer.concat(this.continueInfo.buffer)))
 
-              this.cachedData = []
-              this.continuedData = -1
+              this.continueInfo = {
+                type: -1,
+                buffer: []
+              }
             }
 
             break
           }
           case 0x1: 
           case 0x2: {
-            if (!headers.fin) {
-              this.continuedData = headers.opcode
+            if (this.continueInfo.type !== headers.opcode) {
+              this.close(1002, 'Invalid continuation frame')
+              this.cleanup()
 
-              this.cachedData.push(headers.buffer)
+              return;
+            }
+
+            if (!headers.fin) {
+              this.continueInfo.type = headers.opcode
+              this.continueInfo.buffer.push(headers.buffer)
             } else {
               this.emit('message', headers.opcode === 0x1 ? headers.buffer.toString('utf8') : headers.buffer)
             }
@@ -199,8 +193,10 @@ class WebSocket extends EventEmitter {
     this.socket.destroy()
     this.socket = null
 
-    this.cachedData = []
-    this.continuedData = -1
+    this.continueInfo = {
+      type: -1,
+      buffer: []
+    }
 
     return true
   }
@@ -260,7 +256,7 @@ class WebSocket extends EventEmitter {
     data.writeUInt16BE(code ?? 1000)
     data.write(reason ?? 'normal close', 2)
 
-    this.sendData(data, { len: data.length, fin: true, opcode: 0x08 })
+    this.sendData(data, { len: data.length, fin: true, opcode: 0x8 })
 
     return true
   }
