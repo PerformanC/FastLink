@@ -301,22 +301,6 @@ class Player {
   }
 
   /**
-   * Updates the session data for the player.
-   *
-   * @param data The session data to update.
-   * @throws Error If the data is not provided or is of invalid type.
-   */
-  updateSession(data) {  
-    if (!data) throw new Error('No data provided.')
-    if (typeof data !== 'object') throw new Error('Data must be an object.')
-  
-    this.makeRequest(`/sessions/${Nodes[this.node].sessionId}`, {
-      body: data,
-      method: 'PATCH'
-    })
-  }
-
-  /**
    * Gets the queue of tracks.
    *
    * @return The queue of tracks.
@@ -483,6 +467,23 @@ class Player {
   makeRequest(path, options) {
     return utils.makeNodeRequest(Nodes, this.node, `/v4${path}`, options)
   }
+}
+
+/**
+ * Updates the session data for the node.
+ *
+ * @param node The node to update session data for.
+ * @param data The session data to update.
+ * @throws Error If the data is not provided or is of invalid type.
+ */
+function updateSession(node, data) {  
+  if (!data) throw new Error('No data provided.')
+  if (typeof data !== 'object') throw new Error('Data must be an object.')
+
+  utils.makeNodeRequest(Nodes, node, `/v4/sessions/${Nodes[node].sessionId}`, {
+    body: data,
+    method: 'PATCH'
+  })
 }
 
 /**
@@ -701,6 +702,7 @@ function handleRaw(data) {
 
 export default {
   node: {
+    updateSession,
     connectNodes,
     anyNodeAvailable
   },
