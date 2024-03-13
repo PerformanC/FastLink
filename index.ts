@@ -71,7 +71,7 @@ function connectNodes(nodes: Array<NodeOptions>, config: ConfigOptions) {
         Authorization: node.password,
         'Num-Shards': config.shards,
         'User-Id': config.botId,
-        'Client-Name': 'FastLink/2.4.1 (https://github.com/PerformanC/FastLink/tree/ts)'
+        'Client-Name': 'FastLink/2.4.2 (https://github.com/PerformanC/FastLink/tree/ts)'
       }
     })
 
@@ -401,7 +401,7 @@ class Player {
         Authorization: Nodes[this.node].password,
         'user-id': Config.botId,
         'guild-id': this.guildId,
-        'Client-Name': 'FastLink/2.4.1 (https://github.com/PerformanC/FastLink/tree/ts)'
+        'Client-Name': 'FastLink/2.4.2 (https://github.com/PerformanC/FastLink/tree/ts)'
       }
     })
     .on('open', () => {
