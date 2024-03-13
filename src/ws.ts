@@ -124,7 +124,7 @@ class WebSocket extends EventEmitter {
           }
           case 0x1:
           case 0x2: {
-            if (this.continueInfo.type !== headers.opcode) {
+            if (this.continueInfo.type !== -1 && this.continueInfo.type !== headers.opcode) {
               this.close(1002, 'Invalid continuation frame')
               this.cleanup()
 
@@ -163,7 +163,7 @@ class WebSocket extends EventEmitter {
 
             break
           }
-          case 0x10: {
+          case 0xA: {
             this.emit('pong')
           }
         }
