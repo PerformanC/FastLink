@@ -190,8 +190,10 @@ class WebSocket extends EventEmitter {
   }
 
   cleanup() {
-    this.socket.destroy()
-    this.socket = null
+    if (this.socket) {
+      this.socket.destroy()
+      this.socket = null
+    }
 
     this.continueInfo = {
       type: -1,
