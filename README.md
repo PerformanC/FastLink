@@ -154,7 +154,7 @@ client.on('messageCreate', async (message) => {
       return;
     }
 
-    if ([ 'playlist', 'album', 'station' ].includes(track.loadType)) {
+    if ([ 'playlist', 'album', 'station', 'show', 'podcast', 'artist' ].includes(track.loadType)) {
       player.update({
         tracks: {
           encodeds: track.data.tracks.map((track) => track.encoded)
@@ -166,7 +166,7 @@ client.on('messageCreate', async (message) => {
       return;
     }
 
-    if ([ 'track', 'short' ].includes(track)) {
+    if ([ 'track', 'short' ].includes(track.loadType)) {
       player.update({ 
         track: {
           encoded: track.data.encoded
