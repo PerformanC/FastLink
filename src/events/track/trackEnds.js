@@ -14,12 +14,25 @@ function trackEnds(Event, payload, node, config, Nodes, Players) {
   }
 
   if (name !== 'trackException' && config.queue && ['finished', 'loadFailed'].includes(payload.reason)) {
-    player.queue.shift()
+    switch (player.loop) {
+      case 'track': {
+        player.queue.unshift(player.queue[0])
+
+        break
+      }
+      case 'queue': {
+        player.queue.push(player.queue.shift())
+
+        break
+      }
+      default: {
+        player.queue.shift()
+
+        break
+      }
+    }
 
     if (player.queue.length !== 0) {
-      if (player.loop === 'track') player.queue.unshift(player.queue[0])
-      else if (player.loop === 'queue') player.queue.push(player.queue[0])
-      
       utils.makeNodeRequest(Nodes, node, `/v4/sessions/${Nodes[node].sessionId}/players/${payload.guildId}`, {
         body: {
           track: {
