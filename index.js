@@ -7,7 +7,7 @@ import event from 'events'
 
 import events from './src/events.js'
 import utils from './src/utils.js'
-import Pws from './src/ws.js'
+import Pws from '@performanc/pwsl-mini'
 
 let Config = {}
 let Nodes = {}
