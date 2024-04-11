@@ -7,7 +7,7 @@ function websocketClosed(Event, payload, node, Nodes, Players) {
     return Players
   }
 
-  delete Players[payload.guildId]
+  Players[payload.guildId].playing = false
  
   Event.emit('websocketClosed', { node: Nodes[node], guildId: payload.guildId, payload })
  

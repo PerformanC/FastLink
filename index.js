@@ -642,64 +642,47 @@ function unmarkAllFailedAddresses(node) {
  * @throws Error If data is not provided or if data is not an object.
  */
 function handleRaw(data) {
+  function _sendInfo() {
+    const player = new Player(data.d.guild_id)
+
+    if (!player.playerCreated()) return;
+
+    player.update({
+      voice: {
+        token: vcsData[data.d.guild_id].server.token,
+        endpoint: vcsData[data.d.guild_id].server.endpoint,
+        sessionId: vcsData[data.d.guild_id].sessionId
+      }
+    })
+  }
+
   switch (data.t) {
     case 'VOICE_SERVER_UPDATE': {
       if (!vcsData[data.d.guild_id]) return;
-
-      const player = new Player(data.d.guild_id)
-
-      if (!player.playerCreated()) return;
-
-      player.update({
-        voice: {
-          token: data.d.token,
-          endpoint: data.d.endpoint,
-          sessionId: vcsData[data.d.guild_id].sessionId
-        }
-      })
 
       vcsData[data.d.guild_id].server = {
         token: data.d.token,
         endpoint: data.d.endpoint
       }
 
+      _sendInfo()
+
+      delete vcsData[data.d.guild_id].sessionId
+
       break
     }
 
     case 'VOICE_STATE_UPDATE': {
-      if (data.d.member.user.id !== Config.botId) return;
+      if (data.d.member.user.id !== Config.botId || data.d.session_id === vcsData[data.d.guild_id]?.sessionId) return;
 
       vcsData[data.d.guild_id] = {
         ...vcsData[data.d.guild_id],
         sessionId: data.d.session_id
       }
 
-      if (vcsData[data.d.guild_id].server) {
-        const player = new Player(data.d.guild_id)
-
-        if (!player.playerCreated()) return;
-
-        player.update({
-          voice: {
-            token: vcsData[data.d.guild_id].server.token,
-            endpoint: vcsData[data.d.guild_id].server.endpoint,
-            sessionId: vcsData[data.d.guild_id].sessionId
-          }
-        })
-      }
+      if (vcsData[data.d.guild_id].server) _sendInfo()
 
       break
-    }
-
-    case 'GUILD_CREATE': {
-      data.d.voice_states.forEach((state) => {
-        if (state.user_id !== Config.botId) return;
-
-        vcsData[data.d.id] = {
-          ...vcsData[data.d.id],
-          sessionId: state.session_id
-        }
-      })
     }
   }
 }
