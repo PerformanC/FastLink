@@ -3,7 +3,7 @@
  * @author PerformanC <performancorg@gmail.com>
  */
 
-import event from 'events'
+import event from 'node:events'
 
 import events from './src/events.js'
 import utils from './src/utils.js'
