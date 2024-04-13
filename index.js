@@ -176,8 +176,8 @@ class Player {
    * @throws Error If the voiceId or sendPayload is not provided, or if they are of invalid type.
    */
   connect(voiceId, options, sendPayload) {  
-    if (!voiceId) throw new Error('No voiceId provided.')
-    if (typeof voiceId !== 'string') throw new Error('VoiceId must be a string.')
+    if (voiceId === undefined) throw new Error('No voiceId provided.')
+    if (typeof voiceId !== 'string' && voiceId !== null) throw new Error('VoiceId must be a string.')
 
     if (!options) options = {}
     if (typeof options !== 'object') throw new Error('Options must be an object.')
@@ -185,7 +185,7 @@ class Player {
     if (!sendPayload) throw new Error('No sendPayload provided.')
     if (typeof sendPayload !== 'function') throw new Error('SendPayload must be a function.')
 
-    Players[this.guildId].connected = !!voiceId
+    Players[this.guildId].connected = voiceId !== null
   
     sendPayload(this.guildId, {
       op: 4,
@@ -297,7 +297,7 @@ class Player {
    * Destroys the player.
    */
   destroy() {  
-    Players[this.guildId] = null
+    delete Players[this.guildId]
   
     this.makeRequest(`/sessions/${Nodes[this.node].sessionId}/players/${this.guildId}`, {
       method: 'DELETE'
@@ -667,13 +667,15 @@ function handleRaw(data) {
 
       _sendInfo()
 
-      delete vcsData[data.d.guild_id].sessionId
-
       break
     }
 
     case 'VOICE_STATE_UPDATE': {
-      if (data.d.member.user.id !== Config.botId || data.d.session_id === vcsData[data.d.guild_id]?.sessionId) return;
+      if (data.d.member.user.id !== Config.botId) return;
+
+      if (data.d.channel_id === null) return delete vcsData[data.d.guild_id]
+
+      if (data.d.session_id === vcsData[data.d.guild_id]?.sessionId) return;
 
       vcsData[data.d.guild_id] = {
         ...vcsData[data.d.guild_id],
