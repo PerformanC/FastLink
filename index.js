@@ -17,12 +17,12 @@ const vcsData = {}
 const Event = new event()
 
 /**
- * Connects node's WebSocket server for communication.
+ * Connects FrequenC's WebSocket server for communication.
  *
  * @param nodes An array of node objects containing connection details.
  * @param config Configuration object containing botId, shards, queue, and debug options.
  * @throws Error If nodes or config is not provided or not in the expected format.
- * @returns Event emitter for listening to LavaLink events.
+ * @returns Event emitter for listening to FrequenC events.
  */
 function connectNodes(nodes, config) {
   if (!nodes) throw new Error('No nodes provided.')
@@ -34,15 +34,15 @@ function connectNodes(nodes, config) {
   if (!config.botId) throw new Error('No botId provided.')
   if (typeof config.botId !== 'string') throw new Error('BotId must be a string.')
 
-  if (!config.shards) throw new Error('No shards provided.')
-  if (typeof config.shards !== 'number') throw new Error('Shards must be a number.')
-
   if (config.queue && typeof config.queue !== 'boolean') throw new Error('Queue must be a boolean.')
+
+  if (!config.botName) throw new Error('No botName provided.')
+  if (typeof config.botName !== 'string') throw new Error('BotName must be a string.')
 
   Config = {
     botId: config.botId,
-    shards: config.shards,
-    queue: config.queue ?? false
+    queue: config.queue ?? false,
+    botName: config.botName
   }
 
   nodes.forEach((node) => {
@@ -62,12 +62,11 @@ function connectNodes(nodes, config) {
       sessionId: null
     }
 
-    let ws = new Pws(`ws${node.secure ? 's' : ''}://${node.hostname}${node.port ? `:${node.port}` : ''}/v4/websocket`, {
+    let ws = new Pws(`ws${node.secure ? 's' : ''}://${node.hostname}${node.port ? `:${node.port}` : ''}/v1/websocket`, {
       headers: {
         Authorization: node.password,
-        'Num-Shards': config.shards,
         'User-Id': config.botId,
-        'Client-Name': 'FastLink/2.4.2 (https://github.com/PerformanC/FastLink)'
+        'Client-Info': `FastLink/2.4.2 (${Config.botName})`
       }
     })
 
@@ -469,7 +468,7 @@ class Player {
   }
 
   makeRequest(path, options) {
-    return utils.makeNodeRequest(Nodes, this.node, `/v4${path}`, options)
+    return utils.makeNodeRequest(Nodes, this.node, `/v1${path}`, options)
   }
 }
 
@@ -484,7 +483,7 @@ function updateSession(node, data) {
   if (!data) throw new Error('No data provided.')
   if (typeof data !== 'object') throw new Error('Data must be an object.')
 
-  utils.makeNodeRequest(Nodes, node, `/v4/sessions/${Nodes[node].sessionId}`, {
+  utils.makeNodeRequest(Nodes, node, `/v1/sessions/${Nodes[node].sessionId}`, {
     body: data,
     method: 'PATCH'
   })
@@ -513,7 +512,7 @@ function getPlayer(guildId, node) {
 
   if (!Nodes[node]) throw new Error('Node does not exist.')
 
-  return utils.makeNodeRequest(Nodes, node, `/v4/sessions/${Nodes[node].sessionId}/players/${guildId}`, { method: 'GET' })
+  return utils.makeNodeRequest(Nodes, node, `/v1/sessions/${Nodes[node].sessionId}/players/${guildId}`, { method: 'GET' })
 }
 
 /**
@@ -529,7 +528,7 @@ function getPlayers(node) {
 
   if (!Nodes[node]) throw new Error('Node does not exist.')
 
-  return utils.makeNodeRequest(Nodes, node, '/v4/sessions', { method: 'GET' })
+  return utils.makeNodeRequest(Nodes, node, '/v1/sessions', { method: 'GET' })
 }
 
 /**
@@ -545,7 +544,7 @@ function getInfo(node) {
 
   if (!Nodes[node]) throw new Error('Node does not exist.')
 
-  return utils.makeNodeRequest(Nodes, node, '/v4/info', { method: 'GET' })
+  return utils.makeNodeRequest(Nodes, node, '/v1/info', { method: 'GET' })
 }
 
 /**
@@ -561,7 +560,7 @@ function getStats(node) {
 
   if (!Nodes[node]) throw new Error('Node does not exist.')
 
-  return utils.makeNodeRequest(Nodes, node, '/v4/stats', { method: 'GET' })
+  return utils.makeNodeRequest(Nodes, node, '/v1/stats', { method: 'GET' })
 }
 
 /**
@@ -578,61 +577,6 @@ function getVersion(node) {
   if (!Nodes[node]) throw new Error('Node does not exist.')
 
   return utils.makeNodeRequest(Nodes, node, '/version', { method: 'GET' })
-}
-
-/**
- * Retrieves the router planner status for a given node.
- * 
- * @param node The node to retrieve router planner status from.
- * @throws Error If no node is provided or if node is not a string.
- * @return A Promise that resolves to the retrieved router planner status data.
- */
-function getRouterPlannerStatus(node) {
-  if (!node) throw new Error('No node provided.')
-  if (typeof node !== 'string') throw new Error('Node must be a string.')
-
-  if (!Nodes[node]) throw new Error('Node does not exist.')
-
-  return utils.makeNodeRequest(Nodes, node, '/v4/routerplanner/status', { method: 'GET' })
-}
-
-/**
- * Unmarks a failed address for a given node.
- * 
- * @param node The node to unmark failed address from.
- * @param address The address to unmark.
- * @throws Error If no node is provided or if node is not a string.
- * @returns A Promise that resolves when the request is complete.
- */
-function unmarkFailedAddress(node, address) {
-  if (!node) throw new Error('No node provided.')
-  if (typeof node !== 'string') throw new Error('Node must be a string.')
-
-  if (!Nodes[node]) throw new Error('Node does not exist.')
-
-  if (!address) throw new Error('No address provided.')
-  if (typeof address !== 'string') throw new Error('Address must be a string.')
-
-  return utils.makeNodeRequest(Nodes, node, `/v4/routerplanner/free/address?address=${encodeURIComponent(address)}`, {
-    method: 'GET',
-    body: { address }
-  })
-}
-
-/**
- * Unmarks all failed addresses for a given node.
- * 
- * @param node The node to unmark failed addresses from.
- * @throws Error If no node is provided or if node is not a string.
- * @returns A Promise that resolves when the request is complete.
- */
-function unmarkAllFailedAddresses(node) {
-  if (!node) throw new Error('No node provided.')
-  if (typeof node !== 'string') throw new Error('Node must be a string.')
-
-  if (!Nodes[node]) throw new Error('Node does not exist.')
-
-  return utils.makeNodeRequest(Nodes, node, '/v4/routerplanner/free/all', { method: 'GET' })
 }
 
 /**
@@ -675,8 +619,6 @@ function handleRaw(data) {
 
       if (data.d.channel_id === null) return delete vcsData[data.d.guild_id]
 
-      if (data.d.session_id === vcsData[data.d.guild_id]?.sessionId) return;
-
       vcsData[data.d.guild_id] = {
         ...vcsData[data.d.guild_id],
         sessionId: data.d.session_id
@@ -699,11 +641,6 @@ export default {
     Player,
     getPlayers,
     getPlayer
-  },
-  routerPlanner: {
-    getRouterPlannerStatus,
-    unmarkFailedAddress,
-    unmarkAllFailedAddresses
   },
   other: {
     getInfo,

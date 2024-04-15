@@ -4,7 +4,10 @@
 
 ## About
 
-FastLink is a low-level [Node.js](https://nodejs.org) Lavalink client, with a simple and easy-to-use API. It is made to be fast and lightweight.
+FastLink is a low-level [Node.js](https://nodejs.org) [FrequenC](https://github.com/PerformanC/FrequenC) client, with a simple and easy-to-use API. It is made to be fast and lightweight.
+
+> [!WARNING]
+> FrequenC is experimental, so does FastLink. FrequenC is limited to few features and may break at any time. Use it at your own risk.
 
 ## Installation
 
@@ -19,12 +22,12 @@ $ npm i @performanc/fastlink
 ### Minimum requirements
 
 - Node.js 14 or higher
-- Lavalink v4
+- FrequenC
 
 ### Recommended requirements
 
 - Node.js 18 or higher
-- NodeLink
+- FrequenC built from source
 
 ### Example
 
@@ -46,6 +49,7 @@ const client = new Discord.Client({
 
 const prefix = '!'
 const botId = 'Your bot Id here'
+const botName = 'Your bot name here'
 const token = 'Your bot token here'
 
 const events = FastLink.node.connectNodes([{
@@ -55,7 +59,7 @@ const events = FastLink.node.connectNodes([{
   port: 2333
 }], {
   botId,
-  shards: 1,
+  botName
   queue: true
 })
 
@@ -142,18 +146,44 @@ client.on('messageCreate', async (message) => {
 
     const track = await player.loadTrack((args.startsWith('https://') ? '' : 'ytsearch:') + args)
 
+    /*
+      {
+        loadType: 'error',
+        data: 'Something went wrong...'
+      }
+    */
     if (track.loadType === 'error') {
-      message.channel.send('Something went wrong. ' + track.data.message)
+      message.channel.send('Something went wrong. ' + track.data)
 
       return;
     }
 
+    /*
+      {
+        loadType: 'empty'
+      }
+    */
     if (track.loadType === 'empty') {
       message.channel.send('No matches found.')
 
       return;
     }
 
+    /*
+      {
+        loadType: 'playlist',
+        data: {
+          tracks: [
+            {
+              encoded: 'encoded',
+              info: {
+                ...
+              }
+            }
+          ]
+        }
+      }
+    */
     if ([ 'playlist', 'album', 'station', 'show', 'podcast', 'artist' ].includes(track.loadType)) {
       player.update({
         tracks: {
@@ -166,6 +196,17 @@ client.on('messageCreate', async (message) => {
       return;
     }
 
+    /*
+      {
+        loadType: 'track',
+        data: {
+          encoded: 'encoded',
+          info: {
+            ...
+          }
+        }
+      }
+    */
     if ([ 'track', 'short' ].includes(track.loadType)) {
       player.update({ 
         track: {
@@ -178,6 +219,19 @@ client.on('messageCreate', async (message) => {
       return;
     }
 
+    /*
+      {
+        loadType: 'search',
+        data: [
+          {
+            encoded: 'encoded',
+            info: {
+              ...
+            }
+          }
+        ]
+      }
+    */
     if (track.loadType === 'search') {
       player.update({
         track: {
