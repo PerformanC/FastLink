@@ -11,7 +11,6 @@ function trackStart(Event, payload, node, config, Nodes, Players) {
 
   if (!config.queue) player.track = payload.track
   player.playing = true
-  player.volume = 100
 
   Event.emit('trackStart', { node: Nodes[node], guildId: payload.guildId, player, track: payload.track })
 

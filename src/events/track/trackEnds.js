@@ -45,7 +45,6 @@ function trackEnds(Event, payload, node, config, Nodes, Players) {
   } else player.track = null
 
   player.playing = false
-  player.volume = null
 
   Event.emit(name, {
     node: Nodes[node],

@@ -146,7 +146,7 @@ class Player {
       connected: false,
       playing: false,
       paused: false,
-      volume: null,
+      volume: 100,
       node,
       loop: null,
       guildWs: null
@@ -286,6 +286,9 @@ class Player {
       Players[this.guildId].playing = !body.paused
       Players[this.guildId].paused = body.paused
     }
+
+    if (body.volume !== undefined && body.filters?.volume === undefined)
+      Players[this.guildId].volume = body.volume || (body.filters?.volume * 100)
   
     this.makeRequest(`/sessions/${Nodes[this.node].sessionId}/players/${this.guildId}?noReplace=${noReplace !== true ? false : true}`, {
       body,
