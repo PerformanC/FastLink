@@ -393,7 +393,7 @@ class Player {
     if (!track) throw new Error('No track provided.')
     if (typeof track !== 'string') throw new Error('Track must be a string.')
   
-    return this.makeRequest(`/decodetrack?encodedTrack=${track}`, {
+    return this.makeRequest(`/decodetrack?encodedTrack=${encodeURIComponent(track)}`, {
       method: 'GET'
     })
   }
