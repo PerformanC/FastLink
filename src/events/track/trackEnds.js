@@ -16,7 +16,7 @@ function trackEnds(Event, payload, node, config, Nodes, Players) {
   if (name !== 'trackException' && config.queue && ['finished', 'loadFailed'].includes(payload.reason)) {
     switch (player.loop) {
       case 'track': {
-        player.queue.unshift(player.queue[0])
+        /* Avoid removing current track from queue */
 
         break
       }
