@@ -12,7 +12,7 @@ import Pws from '@performanc/pwsl-mini'
 let Config = {}
 let Nodes = {}
 let Players = {}
-const vcsData = {}
+let vcsData = {}
 
 const Event = new event()
 
@@ -81,11 +81,12 @@ function connectNodes(nodes, config) {
     })
 
     ws.on('close', async () => {
-      const tmp = await events.close(Event, ws, node, Config, Nodes, Players)
+      const tmp = await events.close(Event, ws, node, Config, Nodes, Players, vcsData)
 
       Nodes = tmp.Nodes
       Players = tmp.Players
       ws = tmp.ws
+      vcsData = tmp.vcsData
     })
 
     ws.on('error', (err) => events.error(Event, err, node.hostname))

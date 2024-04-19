@@ -61,7 +61,7 @@ function message(Event, data, node, config, Nodes, Players) {
   return { Nodes, Players }
 }
 
-async function close(Event, ws, node, config, Nodes, Players) {
+async function close(Event, ws, node, config, Nodes, Players, vcsData) {
   Event.emit('debug', `[FastLink] Disconnected from ${node.hostname}`)
 
   ws.removeAllListeners()
@@ -69,8 +69,11 @@ async function close(Event, ws, node, config, Nodes, Players) {
   Nodes[node.hostname] = null
 
   Object.keys(Players).forEach((key) => {
-    if (Players[key].node === node.hostname)
+    if (Players[key].node === node.hostname) {
       delete Players[key]
+
+      if (vcsData[key]?.sessionId) delete vcsData[key].sessionId
+    }
   })
 
   const index = await import('../index.js')
@@ -79,7 +82,12 @@ async function close(Event, ws, node, config, Nodes, Players) {
     index.default.node.connectNodes([ node ], config)
   }, 5000)
 
-  return { Nodes, Players, ws }
+  return {
+    Nodes,
+    Players,
+    ws,
+    vcsData
+  }
 }
 
 function error(Event, err, node) {
