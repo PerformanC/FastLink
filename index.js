@@ -129,7 +129,24 @@ class Player {
     if (typeof guildId !== 'string') throw new Error('GuildId must be a string.')
 
     this.guildId = guildId
-    this.node = Players[this.guildId]?.node
+  }
+
+  /**
+   * Retrieves the player local information.
+   * 
+   * @returns The player local information.
+   */
+  get info() {
+    return Players[this.guildId]
+  }
+
+  /**
+   * Retrieves the node tied to the player.
+   * 
+   * @returns The node tied to the player.
+   */
+  get node() {
+    return Players[this.guildId]?.node
   }
 
   /**
@@ -155,8 +172,6 @@ class Player {
 
     if (Config.queue) Players[this.guildId].queue = []
     else Players[this.guildId].track = null
-
-    this.node = node
   }
 
   /**
