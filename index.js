@@ -252,10 +252,9 @@ class Player {
    * Updates the player state.
    *
    * @param body The body of the update request.
-   * @param noReplace Flag to specify whether to replace the existing track or not. Optional.
    * @throws Error If the body is not provided or is of invalid type.
    */
-  update(body, noReplace) {  
+  update(body) {  
     if (!body) throw new Error('No body provided.')
     if (typeof body !== 'object') throw new Error('Body must be an object.')
   
@@ -302,7 +301,7 @@ class Player {
       Players[this.guildId].paused = body.paused
     }
   
-    this.makeRequest(`/sessions/${Nodes[this.node].sessionId}/players/${this.guildId}?noReplace=${noReplace !== true ? false : true}`, {
+    this.makeRequest(`/sessions/${Nodes[this.node].sessionId}/players/${this.guildId}`, {
       body,
       method: 'PATCH'
     })
@@ -611,7 +610,7 @@ function handleRaw(data) {
       voice: {
         token: vcsData[data.d.guild_id].server.token,
         endpoint: vcsData[data.d.guild_id].server.endpoint,
-        sessionId: vcsData[data.d.guild_id].sessionId
+        session_id: vcsData[data.d.guild_id].sessionId
       }
     })
   }
