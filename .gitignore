@@ -1,0 +1,14 @@
+*
+
+!.github
+!.github/**
+!src
+!src/**
+!.gitignore
+!.npmignore
+!Doxyfile
+!index.js
+!LICENSE
+!package-lock.json
+!package.json
+!README.md
