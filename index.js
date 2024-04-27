@@ -634,6 +634,8 @@ function handleRaw(data) {
 
       if (data.d.channel_id === null) return delete vcsData[data.d.guild_id]
 
+      if (vcsData[data.d.guild_id]?.sessionId === data.d.session_id) return;
+
       vcsData[data.d.guild_id] = {
         ...vcsData[data.d.guild_id],
         sessionId: data.d.session_id
