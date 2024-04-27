@@ -664,5 +664,6 @@ export default {
     getStats,
     getVersion,
     handleRaw
-  }
+  },
+  type: 'FrequenC'
 }
