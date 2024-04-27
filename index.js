@@ -311,11 +311,11 @@ class Player {
    * Destroys the player.
    */
   destroy() {  
-    delete Players[this.guildId]
-  
     this.makeRequest(`/sessions/${Nodes[this.node].sessionId}/players/${this.guildId}`, {
       method: 'DELETE'
     })
+
+    delete Players[this.guildId]
   }
 
   /**
