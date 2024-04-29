@@ -729,5 +729,6 @@ export default {
     getStats,
     getVersion,
     handleRaw
-  }
+  },
+  type: 'LavaLink v4'
 }
