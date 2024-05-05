@@ -1,16 +1,17 @@
-import http from 'http'
-import https from 'https'
-import zlib from 'zlib'
+import http from 'node:http'
+import https from 'node:https'
+import zlib from 'node:zlib'
+import process from 'node:process'
 
 async function makeNodeRequest(Nodes, node, endpoint, options) {
-  return new Promise(async (resolve, reject) => {
+  return new Promise(async (resolve) => {
     let data = ''
 
     const agent = Nodes[node].secure ? https : http
     const req = agent.request(`http${Nodes[node].secure ? 's' : ''}://${Nodes[node].hostname}${endpoint}`, {
       method: options.method,
       headers: {
-        'Accept-Encoding': 'br, gzip, deflate',
+        'Accept-Encoding': process.isBun ? 'gzip, deflate' : 'br, gzip, deflate',
         'User-Agent': 'FastLink',
         'Content-Type': 'application/json',
         'Authorization': Nodes[node].password,
