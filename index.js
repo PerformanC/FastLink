@@ -552,6 +552,15 @@ function getPlayers(node) {
 }
 
 /**
+ * Retrieves all local players.
+ * 
+ * @returns The local players.
+ */
+function getAllLocalPlayers() {
+  return Players
+}
+
+/**
  * Retrieves the info for a given node.
  *
  * @param node The node to retrieve info from.
@@ -717,7 +726,8 @@ export default {
   player: {
     Player,
     getPlayers,
-    getPlayer
+    getPlayer,
+    getAllLocalPlayers
   },
   routerPlanner: {
     getRouterPlannerStatus,
