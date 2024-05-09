@@ -686,7 +686,13 @@ function handleRaw(data) {
 
   switch (data.t) {
     case 'VOICE_SERVER_UPDATE': {
-      if (!vcsData[data.d.guild_id] || vcsData[data.d.guild_id].server?.endpoint === data.d.endpoint) return;
+      if (!vcsData[data.d.guild_id]) {
+        Event.emit('debug', '[FastLink] Voice server update received from Discord, but no data from "voice state update" found. This is only possible if the provided botId is incorrect.')
+
+        return;
+      }
+
+      if (vcsData[data.d.guild_id].server?.endpoint === data.d.endpoint) return;
 
       vcsData[data.d.guild_id].server = {
         token: data.d.token,
