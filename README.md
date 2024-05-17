@@ -87,49 +87,7 @@ client.on('messageCreate', async (message) => {
     return;
   }
 
-  if (commandName === 'record') {
-    const player = new FastLink.player.Player(message.guild.id)
-
-    if (player.playerCreated() === false) {
-      message.channel.send('No player found.')
-
-      return;
-    }
-
-    const voiceEvents = player.listen()
-
-    voiceEvents.on('endSpeaking', (voice) => {
-      const base64Voice = voice.data
-      const buffer = Buffer.from(base64Voice, 'base64')
-
-      const previousVoice = fs.readFileSync(`./voice-${message.author.id}.ogg`) || null
-      fs.writeFileSync(`./voice-${message.author.id}.ogg`, previousVoice ? Buffer.concat([previousVoice, buffer]) : buffer)
-    })
-
-    message.channel.send('Started recording. Be aware: This will record everything you say in the voice channel, even if the bot is deaf. Server deaf the bot if you don\'t want to be recorded by any chances.')
-  }
-
-  if (commandName === 'stoprecord') {
-    const player = new FastLink.player.Player(message.guild.id)
-
-    if (player.playerCreated() === false) {
-      message.channel.send('No player found.')
-
-      return;
-    }
-
-    player.stopListen()
-
-    message.channel.send('Stopped recording.')
-  }
-
-  if (commandName === 'play') {
-    if (!message.member.voice.channel) {
-      message.channel.send('You must be in a voice channel.')
-
-      return;
-    }
-
+  if (commandName === 'search') {
     if (!FastLink.node.anyNodeAvailable()) {
       message.channel.send('There aren\'t nodes connected.')
 
@@ -140,10 +98,6 @@ client.on('messageCreate', async (message) => {
 
     if (player.playerCreated() === false) player.createPlayer()
 
-    player.connect(message.member.voice.channel.id.toString(), { mute: false, deaf: true }, (guildId, payload) => {
-      client.guilds.cache.get(guildId).shard.send(payload)
-    })
-
     const track = await player.loadTrack((args.startsWith('https://') ? '' : 'ytsearch:') + args)
 
     /*
@@ -153,7 +107,7 @@ client.on('messageCreate', async (message) => {
       }
     */
     if (track.loadType === 'error') {
-      message.channel.send('Something went wrong. ' + track.data)
+      message.channel.send(`Something went wrong. ${track.data}}`)
 
       return;
     }
@@ -184,14 +138,8 @@ client.on('messageCreate', async (message) => {
         }
       }
     */
-    if ([ 'playlist', 'album', 'station', 'show', 'podcast', 'artist' ].includes(track.loadType)) {
-      player.update({
-        tracks: {
-          encodeds: track.data.tracks.map((track) => track.encoded)
-        }
-      })
-
-      message.channel.send(`Added ${track.data.tracks.length} songs to the queue, and playing ${track.data.tracks[0].info.title}.`)
+    if (track.loadType === 'playlist') {
+      message.channel.send(`Found ${track.data.tracks.length} tracks.`)
 
       return;
     }
@@ -207,14 +155,8 @@ client.on('messageCreate', async (message) => {
         }
       }
     */
-    if ([ 'track', 'short' ].includes(track.loadType)) {
-      player.update({ 
-        track: {
-          encoded: track.data.encoded
-        }
-      })
-
-      message.channel.send(`Playing ${track.data.info.title} from ${track.data.info.sourceName} from url search.`)
+    if (track.loadType === 'track') {
+      message.channel.send(`Found ${track.data.info.title} from ${track.data.info.sourceName} from url search.`)
 
       return;
     }
@@ -233,103 +175,10 @@ client.on('messageCreate', async (message) => {
       }
     */
     if (track.loadType === 'search') {
-      player.update({
-        track: {
-          encoded: track.data[0].encoded
-        }
-      })
-
-      message.channel.send(`Playing ${track.data[0].info.title} from ${track.data[0].info.sourceName} from search.`)
+      message.channel.send(`Found ${track.data[0].info.title} from ${track.data[0].info.sourceName} from search.`)
 
       return;
     }
-  }
-
-  if (commandName === 'volume') {
-    const player = new FastLink.player.Player(message.guild.id)
-
-    if (player.playerCreated() === false) {
-      message.channel.send('No player found.')
-
-      return;
-    }
-
-    player.update({
-      volume: parseInt(args)
-    })
-
-    message.channel.send(`Volume set to ${parseInt(args)}`)
-
-    return;
-  }
-
-  if (commandName === 'pause') {
-    const player = new FastLink.player.Player(message.guild.id)
-
-    if (player.playerCreated() === false) {
-      message.channel.send('No player found.')
-
-      return;
-    }
-
-    player.update({ paused: true })
-
-    message.channel.send('Paused.')
-
-    return;
-  }
-
-  if (commandName === 'resume') {
-    const player = new FastLink.player.Player(message.guild.id)
-
-    if (player.playerCreated() === false) {
-      message.channel.send('No player found.')
-
-      return;
-    }
-
-    player.update({ paused: false })
-
-    message.channel.send('Resumed.')
-
-    return;
-  }
-
-  if (commandName === 'skip') {
-    const player = new FastLink.player.Player(message.guild.id)
-
-    if (player.playerCreated() === false) {
-      message.channel.send('No player found.')
-
-      return;
-    }
-
-    const skip = player.skipTrack()
-
-    if (skip) message.channel.send('Skipped the current track.')
-    else message.channel.send('Could not skip the current track.')
-
-    return;
-  }
-
-  if (commandName === 'stop') {
-    const player = new FastLink.player.Player(message.guild.id)
-
-    if (player.playerCreated() === false) {
-      message.channel.send('No player found.')
-
-      return;
-    }
-
-    player.update({
-      track: {
-        encoded: null
-      }
-    })
-
-    message.channel.send('Stopped the player.')
-
-    return;
   }
 })
 
