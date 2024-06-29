@@ -389,7 +389,8 @@ class Player {
       return false
 
     Players[this.guildId].queue.forEach((_, i) => {
-      if(i === 0) return;
+      if (i === 0) return;
+      
       const j = Math.floor(Math.random() * (i + 1))
       const temp = Players[this.guildId].queue[i]
       Players[this.guildId].queue[i] = Players[this.guildId].queue[j]
