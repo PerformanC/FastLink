@@ -379,7 +379,7 @@ class Player {
   /**
    * Shuffles the queue of tracks.
    * 
-   * @return The shuffled queue of tracks, or false if there are less than 3 tracks in the queue.
+   * @return The shuffled queue of tracks, or false if there are less than 3 tracks in the queue. The current playing track will not be shuffled.
    * @throws Error If the queue is disabled.
    */
   shuffle() {
@@ -389,6 +389,8 @@ class Player {
       return false
 
     Players[this.guildId].queue.forEach((_, i) => {
+      if (i === 0) return;
+      
       const j = Math.floor(Math.random() * (i + 1))
       const temp = Players[this.guildId].queue[i]
       Players[this.guildId].queue[i] = Players[this.guildId].queue[j]
