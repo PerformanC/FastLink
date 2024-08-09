@@ -13,6 +13,8 @@ function trackEnds(Event, payload, node, config, Nodes, Players) {
     return Players
   }
 
+  const ended_track = player.queue[0]
+
   if (name !== 'trackException' && config.queue && ['finished', 'loadFailed'].includes(payload.reason)) {
     switch (player.loop) {
       case 'track': {
@@ -56,7 +58,7 @@ function trackEnds(Event, payload, node, config, Nodes, Players) {
     thresholdMs: payload.thresholdMs
   })
 
-  return Players
+  return [Players, ended_track]
 }
 
 export default trackEnds
