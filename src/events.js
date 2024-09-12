@@ -6,7 +6,7 @@ import trackEnds from './events/track/trackEnds.js'
 import websocketClosed from './events/track/websocketClosed.js'
 
 function open(Event, node) {
-  Event.emit('debug', `[FastLink] Connected to ${node}`)
+  Event.emit('debug', `Connected to ${node}, but not ready yet`)
 }
 
 function message(Event, data, node, config, Nodes, Players) {
@@ -62,7 +62,7 @@ function message(Event, data, node, config, Nodes, Players) {
 }
 
 async function close(Event, ws, node, config, Nodes, Players, vcsData) {
-  Event.emit('debug', `[FastLink] Disconnected from ${node.hostname}`)
+  Event.emit('debug', `Disconnected from ${node.hostname}`)
 
   ws.removeAllListeners()
 
@@ -91,7 +91,7 @@ async function close(Event, ws, node, config, Nodes, Players, vcsData) {
 }
 
 function error(Event, err, node) {
-  Event.emit('debug', `[FastLink] Error from ${node}: ${err}`)
+  Event.emit('debug', `Got an error in WebSocket connection with ${node}: ${err}`)
 }
 
 export default {

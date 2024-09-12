@@ -1,15 +1,19 @@
 function websocketClosed(Event, payload, node, Nodes, Players) {
-  Event.emit('debug', `[FastLink] ${node} has received a WebsocketClosed`)
-
   if (!Players[payload.guildId]) {
-    console.log(`[FastLink] Received WebsocketClosed from ${node} but no player was found`)
+    Event.emit('debug', `${node} has received a WebsocketClosed but no player was found`)
 
     return Players
+  } else {
+    Event.emit('debug', `${node} has received a WebsocketClosed`)
   }
 
   Players[payload.guildId].playing = false
- 
-  Event.emit('websocketClosed', { node: Nodes[node], guildId: payload.guildId, payload })
+
+  Event.emit('websocketClosed', {
+    node: Nodes[node],
+    guildId: payload.guildId,
+    payload
+  })
  
   return Players
 }

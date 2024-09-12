@@ -1,6 +1,6 @@
 {
   "name": "@performanc/fastlink",
-  "version": "2.4.2",
+  "version": "3.0.0",
   "description": "Low-level Lavalink/NodeLink wrapper.",
   "main": "index.js",
   "type": "module",
@@ -23,6 +23,8 @@
   },
   "homepage": "https://github.com/PerformanC/FastLink#readme",
   "dependencies": {
-    "@performanc/pwsl-mini": "github:PerformanC/internals#PWSL-mini"
+    "@discordjs/voice": "^0.17.0",
+    "@performanc/pwsl-mini": "github:performanc/internals#PWSL-mini",
+    "discord.js": "^14.14.1"
   }
 }
