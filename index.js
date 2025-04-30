@@ -67,7 +67,7 @@ function connectNodes(nodes, config) {
         Authorization: node.password,
         'Num-Shards': config.shards,
         'User-Id': config.botId,
-        'Client-Name': 'FastLink/3.0.0 (https://github.com/PerformanC/FastLink)'
+        'Client-Name': 'FastLink/2.4.2 (https://github.com/PerformanC/FastLink)'
       }
     })
 
@@ -107,11 +107,7 @@ function anyNodeAvailable() {
 function getRecommendedNode() {
   const nodes = Object.values(Nodes).filter((node) => node?.connected)
 
-  if (nodes.length === 0) {
-    Event.emit('debug', 'No node ready to use')
-
-    return false
-  }
+  if (nodes.length === 0) throw new Error('No node connected.')
   
   return nodes.sort((a, b) => (a.stats.systemLoad / a.stats.cores) * 100 - (b.stats.systemLoad / b.stats.cores) * 100)[0]
 }
@@ -136,7 +132,7 @@ class Player {
   }
 
   /**
-   * The local player information.
+   * Retrieves the player local information.
    * 
    * @returns The player local information.
    */
@@ -145,7 +141,7 @@ class Player {
   }
 
   /**
-   * The node tied to the player.
+   * Retrieves the node tied to the player.
    * 
    * @returns The node tied to the player.
    */
@@ -154,53 +150,37 @@ class Player {
   }
 
   /**
-   * Whether the player is connected or not.
-   * 
-   * @returns The boolean if the player exists or not.
-   */
-  get isCreated() {
-    return Players[this.guildId] ? true : false
-  }
-
-  /**
-   * Queue of the player
-   * 
-   * @returns The queue of the player.
-   */
-  get queue() {
-    if (!Config.queue) throw new Error('Queue is disabled.')
-
-    return Players[this.guildId]?.queue
-  }
-
-  /**
    * Creates a player for the guild.
    *
-   * @return The boolean if the player was created or not.
    * @throws Error If a player already exists for the guild.
    */
   createPlayer() {
     if (Players[this.guildId])
-      throw new Error('Player already exists. Check playerCreated to see if a player exists.')
+      throw new Error('Player already exists. Use playerCreated() to check if a player exists.')
 
-    const node = getRecommendedNode()
-    if (!node) return false
+    const node = getRecommendedNode().hostname
 
     Players[this.guildId] = {
       connected: false,
       playing: false,
       paused: false,
       volume: 100,
-      node: node.hostname,
+      node,
       loop: null,
-      listenerWs: null,
-      data: null
+      guildWs: null
     }
 
     if (Config.queue) Players[this.guildId].queue = []
     else Players[this.guildId].track = null
+  }
 
-    return true
+  /**
+   * Verifies if a player exists for the guild.
+   * 
+   * @returns The boolean if the player exists or not.
+   */
+  playerCreated() {
+    return Players[this.guildId] ? true : false
   }
 
   /**
@@ -209,11 +189,11 @@ class Player {
    * @param voiceId The ID of the voice channel to connect to.
    * @param options Options for the connection, deaf or mute.
    * @param sendPayload A function for sending payload data.
-   * @throws Error If the voiceId or sendPayload is not provided, or if its type is invalid.
+   * @throws Error If the voiceId or sendPayload is not provided, or if they are of invalid type.
    */
   connect(voiceId, options, sendPayload) {  
-    if (!voiceId) throw new Error('No voiceId provided.')
-    if (typeof voiceId !== 'string') throw new Error('VoiceId must be a string.')
+    if (voiceId === undefined) throw new Error('No voiceId provided.')
+    if (typeof voiceId !== 'string' && voiceId !== null) throw new Error('VoiceId must be a string.')
 
     if (!options) options = {}
     if (typeof options !== 'object') throw new Error('Options must be an object.')
@@ -221,7 +201,7 @@ class Player {
     if (!sendPayload) throw new Error('No sendPayload provided.')
     if (typeof sendPayload !== 'function') throw new Error('SendPayload must be a function.')
 
-    Players[this.guildId].connected = true
+    Players[this.guildId].connected = voiceId !== null
   
     sendPayload(this.guildId, {
       op: 4,
@@ -230,29 +210,6 @@ class Player {
         channel_id: voiceId,
         self_mute: options.mute ?? false,
         self_deaf: options.deaf ?? false
-      }
-    })
-  }
-
-  /**
-   * Disconnects from a voice channel.
-   *
-   * @param sendPayload A function for sending payload data.
-   * @throws Error If the sendPayload is not provided or if it is not a function.
-   */
-  disconnect(sendPayload) {  
-    if (!sendPayload) throw new Error('No sendPayload provided.')
-    if (typeof sendPayload !== 'function') throw new Error('SendPayload must be a function.')
-
-    Players[this.guildId].connected = false
-  
-    sendPayload(this.guildId, {
-      op: 4,
-      d: {
-        guild_id: this.guildId,
-        channel_id: null,
-        self_mute: false,
-        self_deaf: false
       }
     })
   }
@@ -299,14 +256,148 @@ class Player {
    * @param noReplace Flag to specify whether to replace the existing track or not. Optional.
    * @throws Error If the body is not provided or is of invalid type.
    */
-  update(body, noReplace = false) {  
+  update(body, noReplace) {  
     if (!body) throw new Error('No body provided.')
     if (typeof body !== 'object') throw new Error('Body must be an object.')
   
-    return this.makeRequest(`/sessions/${Nodes[this.node].sessionId}/players/${this.guildId}?noReplace=${noReplace !== true ? false : true}`, {
+    if (body.track?.encoded && Config.queue) {
+      Players[this.guildId].queue.push(body.track.encoded)
+
+      if (Players[this.guildId].queue.length !== 1 && Object.keys(body).length !== 1) {
+        delete body.track.encoded
+
+        if (!body.track.userData)
+          delete body.track
+      }
+
+      if (Players[this.guildId].queue.length !== 1 && Object.keys(body).length === 1)
+        return;
+    } else if (body.track?.encoded === null) Players[this.guildId].queue = []
+  
+    if (body.tracks?.encodeds) {
+      if (!Config.queue)
+        throw new Error('Queue is disabled.')
+  
+      if (Players[this.guildId].queue.length === 0) {
+        Players[this.guildId].queue = body.tracks.encodeds
+
+        delete body.tracks
+  
+        this.makeRequest(`/sessions/${Nodes[this.node].sessionId}/players/${this.guildId}`, {
+          body: {
+            ...body,
+            track: {
+              ...body.track,
+              encoded: Players[this.guildId].queue[0]
+            }
+          },
+          method: 'PATCH'
+        })
+      } else Players[this.guildId].queue.push(...body.tracks.encodeds)
+  
+      return;
+    }
+
+    if (body.paused !== undefined) {
+      Players[this.guildId].playing = !body.paused
+      Players[this.guildId].paused = body.paused
+    }
+
+    if (body.volume !== undefined && body.filters?.volume === undefined)
+      Players[this.guildId].volume = body.volume || (body.filters?.volume * 100)
+  
+    this.makeRequest(`/sessions/${Nodes[this.node].sessionId}/players/${this.guildId}?noReplace=${noReplace !== true ? false : true}`, {
       body,
       method: 'PATCH'
     })
+  }
+
+  /**
+   * Destroys the player.
+   */
+  destroy() {  
+    this.makeRequest(`/sessions/${Nodes[this.node].sessionId}/players/${this.guildId}`, {
+      method: 'DELETE'
+    })
+
+    delete Players[this.guildId]
+  }
+
+  /**
+   * Gets the queue of tracks.
+   *
+   * @return The queue of tracks.
+   * @throws Error If the queue is disabled.
+   */
+  getQueue() {  
+    if (!Config.queue) throw new Error('Queue is disabled.')
+  
+    return Players[this.guildId].queue
+  }
+
+  /**
+   * Skips the currently playing track.
+   *
+   * @return The queue of tracks, or null if there is no queue.
+   * @throws Error If the queue is disabled
+   */
+  skipTrack() {  
+    if (!Config.queue) throw new Error('Queue is disabled.')
+
+    if (Players[this.guildId].queue.length === 1)
+      return false
+
+    Players[this.guildId].queue.shift()
+  
+    this.makeRequest(`/sessions/${Nodes[this.node].sessionId}/players/${this.guildId}`, {
+      body: {
+        track: {
+          encoded: Players[this.guildId].queue[0]
+        }
+      },
+      method: 'PATCH'
+    })
+  
+    return Players[this.guildId].queue
+  }
+
+  /**
+   * Sets the loop state of the player.
+   *
+   * @param loop The loop state to set.
+   * @return The loop state of the player.
+   */
+  loop(loop) {
+    if (!Config.queue) throw new Error('Queue is disabled.')
+
+    if (![ 'track', 'queue', null ].includes(loop))
+      throw new Error('Loop must be track, queue, or null.')
+
+    return Players[this.guildId].loop = loop
+  }
+
+  /**
+   * Shuffles the queue of tracks.
+   * 
+   * @return The shuffled queue of tracks, or false if there are less than 3 tracks in the queue. The current playing track will not be shuffled.
+   * @throws Error If the queue is disabled.
+   */
+  shuffle() {
+    if (!Config.queue) throw new Error('Queue is disabled.')
+
+    if (Players[this.guildId].queue.length < 3)
+      return false
+
+    Players[this.guildId].queue.forEach((_, i) => {
+      if (i === 0) return;
+      
+      const j = Math.floor(Math.random() * (i + 1))
+      const temp = Players[this.guildId].queue[i]
+      Players[this.guildId].queue[i] = Players[this.guildId].queue[j]
+      Players[this.guildId].queue[j] = temp
+    })
+
+    return Players[this.guildId].queue
   }
 
   /**
@@ -350,12 +441,12 @@ class Player {
   listen() {
     const voiceEvents = new event()
 
-    Players[this.guildId].listenerWs = new Pws(`ws://${Nodes[this.node].hostname}${Nodes[this.node].port ? `:${Nodes[this.node].port}` : ''}/connection/data`, {
+    Players[this.guildId].guildWs = new Pws(`ws://${Nodes[this.node].hostname}${Nodes[this.node].port ? `:${Nodes[this.node].port}` : ''}/connection/data`, {
       headers: {
         Authorization: Nodes[this.node].password,
         'user-id': Config.botId,
         'guild-id': this.guildId,
-        'Client-Name': 'FastLink/3.0.0 (https://github.com/PerformanC/FastLink)'
+        'Client-Name': 'FastLink/2.4.2 (https://github.com/PerformanC/FastLink)'
       }
     })
     .on('open', () => {
@@ -364,8 +455,13 @@ class Player {
     .on('message', (data) => {
       data = JSON.parse(data)
 
-      if (data.type == 'startSpeakingEvent') voiceEvents.emit('startSpeaking', data.data)
-      if (data.type == 'endSpeakingEvent') voiceEvents.emit('endSpeaking', data.data)
+      if (data.type == 'startSpeakingEvent') {
+        voiceEvents.emit('startSpeaking', data.data)
+      }
+
+      if (data.type == 'endSpeakingEvent') {
+        voiceEvents.emit('endSpeaking', data.data)
+      }
     })
     .on('close', () => {
       voiceEvents.emit('close')
@@ -383,72 +479,14 @@ class Player {
    * @returns The boolean if the player is connected or not.
    */
   stopListen() {
-    const listenerWs = Players[this.guildId].listenerWs
+    const guildWs = Players[this.guildId].guildWs
 
-    if (!listenerWs) return false
+    if (!guildWs) return false
 
-    listenerWs.close()
-    Players[this.guildId].listenerWs = null
+    guildWs.close()
+    Players[this.guildId].guildWs = null
 
     return true
-  }
-
-  /**
-   * Skips the currently playing track.
-   *
-   * @return The queue of tracks, or null if there is no queue.
-   * @throws Error If the queue is disabled
-   */
-  skipTrack() {  
-    if (!Config.queue) throw new Error('Queue is disabled.')
-
-    if (Players[this.guildId].queue.length === 1)
-      return false
-
-    Players[this.guildId].queue.shift()
-
-    this.update({
-      track: {
-        encoded: Players[this.guildId].queue[0]
-      }
-    })
-  
-    return Players[this.guildId].queue
-  }
-
-  /**
-   * Sets the loop state of the player.
-   *
-   * @param loop The loop state to set.
-   * @return The loop state of the player.
-   */
-  loop(loop) {
-    if (!Config.queue) throw new Error('Queue is disabled.')
-
-    if (![ 'track', 'queue', null ].includes(loop))
-      throw new Error('Loop must be track, queue, or null.')
-
-    return Players[this.guildId].loop = loop
-  }
-
-  /**
-   * Destroys the player.
-   */
-  destroy() {  
-    this.makeRequest(`/sessions/${Nodes[this.node].sessionId}/players/${this.guildId}`, {
-      method: 'DELETE'
-    })
-  
-    delete Players[this.guildId]
-  }
-
-  /**
-   * Sets additional data for the player.
-   * 
-   * @param data The data to set.
-   */
-  setData(data) {
-    Players[this.guildId].data = data
   }
 
   makeRequest(path, options) {
@@ -651,7 +689,7 @@ function handleRaw(data) {
   switch (data.t) {
     case 'VOICE_SERVER_UPDATE': {
       if (!vcsData[data.d.guild_id]) {
-        Event.emit('debug', 'Voice server update received from Discord, but no data from "voice state update" found. This is only possible if the provided botId is incorrect.')
+        Event.emit('debug', '[FastLink] Voice server update received from Discord, but no data from "voice state update" found. This is only possible if the provided botId is incorrect.')
 
         return;
       }
