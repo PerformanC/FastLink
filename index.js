@@ -113,6 +113,21 @@ function getRecommendedNode() {
 }
 
 /**
+ * Gets statistics about all the connected nodes.
+ *
+ * @returns The boolean if any node is connected or not.
+ */
+function getAllNodeStats() {
+  const nodes = Object.values(Nodes)
+
+  if (nodes.length === 0) throw new Error('No node connected.')
+
+  Promise.all(nodes.map(n => utils.makeNodeRequest(Nodes, nodes, '/v4/stats', { method: 'GET' }) ))
+  .then(nodeStats => { return nodeStats })
+  .catch(() => null)
+}
+
+/**
  * Represents a player for an audio streaming service.
  *
  * @class Player
