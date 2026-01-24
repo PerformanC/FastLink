@@ -7,7 +7,9 @@ import event from 'node:events'
 
 import events from './src/events.js'
 import utils from './src/utils.js'
-import Pws from '@performanc/pwsl-mini'
+import PWSL from '@performanc/pwsl'
+
+const FL_VERSION = '3.0.0'
 
 let Config = {}
 let Nodes = {}
@@ -62,12 +64,12 @@ function connectNodes(nodes, config) {
       sessionId: null
     }
 
-    let ws = new Pws(`ws${node.secure ? 's' : ''}://${node.hostname}${node.port ? `:${node.port}` : ''}/v4/websocket`, {
+    let ws = new PWSL(`ws${node.secure ? 's' : ''}://${node.hostname}${node.port ? `:${node.port}` : ''}/v4/websocket`, {
       headers: {
         Authorization: node.password,
         'Num-Shards': config.shards,
         'User-Id': config.botId,
-        'Client-Name': 'FastLink/3.0.0 (https://github.com/PerformanC/FastLink)'
+        'Client-Name': `FastLink/${FL_VERSION} (https://github.com/PerformanC/FastLink)`
       }
     })
 
@@ -114,6 +116,80 @@ function getRecommendedNode() {
   }
   
   return nodes.sort((a, b) => (a.stats.systemLoad / a.stats.cores) * 100 - (b.stats.systemLoad / b.stats.cores) * 100)[0]
+}
+
+/**
+ * Gets all nodes registered.
+ *
+ * @returns All registered nodes.
+ */
+function getAllNodes() {
+  return Nodes  
+}
+
+/**
+ * Retrieves the info for a given node.
+ *
+ * @param node The node to retrieve info from.
+ * @throws Error If no node is provided or if node is not a string.
+ * @return A Promise that resolves to the retrieved info data.
+ */
+function getInfo(node) {
+  if (!node) throw new Error('No node provided.')
+  if (typeof node !== 'string') throw new Error('Node must be a string.')
+
+  if (!Nodes[node]) throw new Error('Node does not exist.')
+
+  return utils.makeNodeRequest(Nodes, node, '/v4/info', { method: 'GET' })
+}
+
+/**
+ * Retrieves the stats for a given node.
+ *
+ * @param node The node to retrieve stats from.
+ * @throws Error If no node is provided or if node is not a string.
+ * @return A Promise that resolves to the retrieved stats data.
+ */
+function getStats(node) {
+  if (!node) throw new Error('No node provided.')
+  if (typeof node !== 'string') throw new Error('Node must be a string.')
+
+  if (!Nodes[node]) throw new Error('Node does not exist.')
+
+  return utils.makeNodeRequest(Nodes, node, '/v4/stats', { method: 'GET' })
+}
+
+/**
+ * Retrieves the version for a given node.
+ *
+ * @param node The node to retrieve version from.
+ * @throws Error If no node is provided or if node is not a string.
+ * @return A Promise that resolves to the retrieved version data.
+ */
+function getVersion(node) {
+  if (!node) throw new Error('No node provided.')
+  if (typeof node !== 'string') throw new Error('Node must be a string.')
+
+  if (!Nodes[node]) throw new Error('Node does not exist.')
+
+  return utils.makeNodeRequest(Nodes, node, '/version', { method: 'GET' })
+}
+
+/**
+ * Updates the session data for the node.
+ *
+ * @param node The node to update session data for.
+ * @param data The session data to update.
+ * @throws Error If the data is not provided or is of invalid type.
+ */
+function updateSession(node, data) {  
+  if (!data) throw new Error('No data provided.')
+  if (typeof data !== 'object') throw new Error('Data must be an object.')
+
+  utils.makeNodeRequest(Nodes, node, `/v4/sessions/${Nodes[node].sessionId}`, {
+    body: data,
+    method: 'PATCH'
+  })
 }
 
 /**
@@ -174,17 +250,31 @@ class Player {
   }
 
   /**
+   * Sets the queue of the player.
+   * 
+   * @param queue The queue to set.
+   */
+  set queue(queue) {
+    if (!Config.queue) throw new Error('Queue is disabled.')
+    
+    if (!Array.isArray(queue)) throw new Error('Queue must be an array.')
+    
+    Players[this.guildId].queue = queue
+  }
+
+  /**
    * Creates a player for the guild.
    *
+   * @param node The node to create the player on.
    * @return The boolean if the player was created or not.
    * @throws Error If a player already exists for the guild.
    */
-  createPlayer() {
+  createPlayer(node) {
     if (Players[this.guildId])
       throw new Error('Player already exists. Check playerCreated to see if a player exists.')
 
-    const node = getRecommendedNode()
-    if (!node) return false
+    if (!node)
+      throw new Error('No node provided.')
 
     Players[this.guildId] = {
       connected: false,
@@ -240,21 +330,9 @@ class Player {
    * @param sendPayload A function for sending payload data.
    * @throws Error If the sendPayload is not provided or if it is not a function.
    */
-  disconnect(sendPayload) {  
-    if (!sendPayload) throw new Error('No sendPayload provided.')
-    if (typeof sendPayload !== 'function') throw new Error('SendPayload must be a function.')
-
-    Players[this.guildId].connected = false
-  
-    sendPayload(this.guildId, {
-      op: 4,
-      d: {
-        guild_id: this.guildId,
-        channel_id: null,
-        self_mute: false,
-        self_deaf: false
-      }
-    })
+  disconnect(sendPayload) {
+    /* INFO: Just a wrapper to make code easier to understand */
+    this.connect(null, {}, sendPayload)
   }
 
   /**
@@ -302,6 +380,14 @@ class Player {
   update(body, noReplace = false) {  
     if (!body) throw new Error('No body provided.')
     if (typeof body !== 'object') throw new Error('Body must be an object.')
+    
+    if (body.paused !== undefined) {
+      Players[this.guildId].playing = !body.paused
+      Players[this.guildId].paused = body.paused
+    }
+
+    if (body.volume !== undefined && body.filters?.volume === undefined)
+      Players[this.guildId].volume = body.volume || (body.filters?.volume * 100)
   
     return this.makeRequest(`/sessions/${Nodes[this.node].sessionId}/players/${this.guildId}?noReplace=${noReplace !== true ? false : true}`, {
       body,
@@ -350,12 +436,12 @@ class Player {
   listen() {
     const voiceEvents = new event()
 
-    Players[this.guildId].listenerWs = new Pws(`ws://${Nodes[this.node].hostname}${Nodes[this.node].port ? `:${Nodes[this.node].port}` : ''}/connection/data`, {
+    Players[this.guildId].listenerWs = new PWSL(`ws://${Nodes[this.node].hostname}${Nodes[this.node].port ? `:${Nodes[this.node].port}` : ''}/connection/data`, {
       headers: {
         Authorization: Nodes[this.node].password,
         'user-id': Config.botId,
         'guild-id': this.guildId,
-        'Client-Name': 'FastLink/3.0.0 (https://github.com/PerformanC/FastLink)'
+        'Client-Name': `FastLink/${FL_VERSION} (https://github.com/PerformanC/FastLink)`
       }
     })
     .on('open', () => {
@@ -394,6 +480,39 @@ class Player {
   }
 
   /**
+   * Adds a track to the queue
+   * 
+   * @returns The queue of tracks.
+   * @throws Error If the queue is disabled.
+   */
+  addToQueue(track) {
+    if (!Config.queue) throw new Error('Queue is disabled.')
+
+    Players[this.guildId].queue.push(track)
+
+    return Players[this.guildId].queue
+  }
+
+  /**
+   * Removes a track from the queue.
+   * 
+   * @param index The index of the track to remove.
+   * @returns The queue of tracks.
+   * @throws Error If the queue is disabled.
+   */
+  removeFromQueue(index) {
+    if (!Config.queue) throw new Error('Queue is disabled.')
+
+    /* INFO: From 0 to the queue length - 1 */
+    if (index < 0 || index >= Players[this.guildId].queue.length)
+      throw new Error('Index out of bounds.')
+
+    Players[this.guildId].queue.splice(index, 1)
+
+    return Players[this.guildId].queue
+  }
+
+  /**
    * Skips the currently playing track.
    *
    * @return The queue of tracks, or null if there is no queue.
@@ -405,7 +524,7 @@ class Player {
     if (Players[this.guildId].queue.length === 1)
       return false
 
-    Players[this.guildId].queue.shift()
+    this.removeFromQueue(0)
 
     this.update({
       track: {
@@ -457,23 +576,6 @@ class Player {
 }
 
 /**
- * Updates the session data for the node.
- *
- * @param node The node to update session data for.
- * @param data The session data to update.
- * @throws Error If the data is not provided or is of invalid type.
- */
-function updateSession(node, data) {  
-  if (!data) throw new Error('No data provided.')
-  if (typeof data !== 'object') throw new Error('Data must be an object.')
-
-  utils.makeNodeRequest(Nodes, node, `/v4/sessions/${Nodes[node].sessionId}`, {
-    body: data,
-    method: 'PATCH'
-  })
-}
-
-/**
  * Retrieves the player for a given guild.
  * 
  * @param guildId The guild to retrieve player from.
@@ -522,54 +624,6 @@ function getPlayers(node) {
  */
 function getAllLocalPlayers() {
   return Players
-}
-
-/**
- * Retrieves the info for a given node.
- *
- * @param node The node to retrieve info from.
- * @throws Error If no node is provided or if node is not a string.
- * @return A Promise that resolves to the retrieved info data.
- */
-function getInfo(node) {
-  if (!node) throw new Error('No node provided.')
-  if (typeof node !== 'string') throw new Error('Node must be a string.')
-
-  if (!Nodes[node]) throw new Error('Node does not exist.')
-
-  return utils.makeNodeRequest(Nodes, node, '/v4/info', { method: 'GET' })
-}
-
-/**
- * Retrieves the stats for a given node.
- *
- * @param node The node to retrieve stats from.
- * @throws Error If no node is provided or if node is not a string.
- * @return A Promise that resolves to the retrieved stats data.
- */
-function getStats(node) {
-  if (!node) throw new Error('No node provided.')
-  if (typeof node !== 'string') throw new Error('Node must be a string.')
-
-  if (!Nodes[node]) throw new Error('Node does not exist.')
-
-  return utils.makeNodeRequest(Nodes, node, '/v4/stats', { method: 'GET' })
-}
-
-/**
- * Retrieves the version for a given node.
- *
- * @param node The node to retrieve version from.
- * @throws Error If no node is provided or if node is not a string.
- * @return A Promise that resolves to the retrieved version data.
- */
-function getVersion(node) {
-  if (!node) throw new Error('No node provided.')
-  if (typeof node !== 'string') throw new Error('Node must be a string.')
-
-  if (!Nodes[node]) throw new Error('Node does not exist.')
-
-  return utils.makeNodeRequest(Nodes, node, '/version', { method: 'GET' })
 }
 
 /**
@@ -689,9 +743,14 @@ function handleRaw(data) {
 
 export default {
   node: {
-    updateSession,
     connectNodes,
-    anyNodeAvailable
+    anyNodeAvailable,
+    getRecommendedNode,
+    getAllNodes,
+    getInfo,
+    getStats,
+    getVersion,
+    updateSession
   },
   player: {
     Player,
@@ -704,11 +763,6 @@ export default {
     unmarkFailedAddress,
     unmarkAllFailedAddresses
   },
-  other: {
-    getInfo,
-    getStats,
-    getVersion,
-    handleRaw
-  },
+  handleRaw,
   type: 'LavaLink v4'
 }
