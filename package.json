@@ -17,14 +17,12 @@
     "discord"
   ],
   "author": "The PerformanC Organization",
-  "license": "BSD-2-Clause",
+  "license": "BSD-3-Clause",
   "bugs": {
     "url": "https://github.com/PerformanC/FastLink/issues"
   },
   "homepage": "https://github.com/PerformanC/FastLink#readme",
   "dependencies": {
-    "@discordjs/voice": "^0.17.0",
-    "@performanc/pwsl-mini": "github:performanc/internals#PWSL-mini",
-    "discord.js": "^14.14.1"
+    "@performanc/pwsl": "github:performanc/internals#PWSL"
   }
 }
