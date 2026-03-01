@@ -1,5 +1,5 @@
 function stats(Event, payload, node, Nodes) {
-  Event.emit('debug', `[FastLink] Received stats from ${node}`)
+  Event.emit('debug', `Received node status from ${node}`)
 
   Nodes[node].stats = {
     cores: payload.cpu.cores,

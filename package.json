@@ -1,6 +1,6 @@
 {
   "name": "@performanc/fastlink",
-  "version": "2.4.2",
+  "version": "3.0.0",
   "description": "Low-level Lavalink/NodeLink wrapper.",
   "main": "index.js",
   "type": "module",
@@ -17,12 +17,12 @@
     "discord"
   ],
   "author": "The PerformanC Organization",
-  "license": "BSD-2-Clause",
+  "license": "BSD-3-Clause",
   "bugs": {
     "url": "https://github.com/PerformanC/FastLink/issues"
   },
   "homepage": "https://github.com/PerformanC/FastLink#readme",
   "dependencies": {
-    "@performanc/pwsl-mini": "github:PerformanC/internals#PWSL-mini"
+    "@performanc/pwsl": "github:performanc/internals#PWSL"
   }
 }

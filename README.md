@@ -294,4 +294,4 @@ If you have any questions, or only want to give a feedback, about FastLink or an
 
 ## License
 
-FastLink is licensed under [BSD 2-Clause License](LICENSE). You can read more about it on [Open Source Initiative](https://opensource.org/licenses/BSD-2-Clause).
+FastLink is licensed under [BSD 3-Clause License](LICENSE). You can read more about it on [Open Source Initiative](https://opensource.org/licenses/BSD-3-Clause).

@@ -3,20 +3,20 @@ import utils from '../../utils.js'
 function trackEnds(Event, payload, node, config, Nodes, Players) {
   const name = payload.type === 'TrackEndEvent' ? 'trackEnd' : (payload.type === 'TrackExceptionEvent' ? 'trackException' : 'trackStuck')
 
-  Event.emit('debug', `[FastLink] ${node} has received a ${name}`)
-
   const player = Players[payload.guildId]
 
   if (!player) {
-    console.log(`[FastLink] Received ${name} from ${node} but no player was found`)
+    Event.emit('debug', `Received ${name} from ${node} but no player was found`)
 
     return Players
+  } else {
+    Event.emit('debug', `${node} has received a ${name}`)
   }
 
-  if (name !== 'trackException' && config.queue && ['finished', 'loadFailed'].includes(payload.reason)) {
+  if (config.queue && name !== 'trackException' && [ 'finished', 'loadFailed' ].includes(payload.reason)) {
     switch (player.loop) {
       case 'track': {
-        /* Avoid removing current track from queue */
+        /* INFO: avoid removing current track from queue */
 
         break
       }
