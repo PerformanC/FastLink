@@ -697,7 +697,8 @@ function handleRaw(data) {
       voice: {
         token: vcsData[data.d.guild_id].server.token,
         endpoint: vcsData[data.d.guild_id].server.endpoint,
-        sessionId: vcsData[data.d.guild_id].sessionId
+        sessionId: vcsData[data.d.guild_id].sessionId,
+        channelId: vcsData[data.d.guild_id].channelId
       }
     })
   }
@@ -731,7 +732,8 @@ function handleRaw(data) {
 
       vcsData[data.d.guild_id] = {
         ...vcsData[data.d.guild_id],
-        sessionId: data.d.session_id
+        sessionId: data.d.session_id,
+        channelId: data.d.channel_id
       }
 
       if (vcsData[data.d.guild_id].server) _sendInfo()
